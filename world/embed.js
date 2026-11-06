@@ -46,14 +46,20 @@ if (host && window.__storyWorlds) {
   }, true);
   const plus = $('#skyNew');
   if (plus) plus.onclick = () => post({ type: 'new' });
-  // Growth follows the real goal; the shape is chosen later, once the server can keep it.
+  // Growth follows the real goal; shape choices are kept by the app.
   const growth = $('#growth');
   if (growth) growth.disabled = true;
-  $('#planetForm')?.setAttribute('hidden', '');
+  window.addEventListener('planet-shape', event => post({ type: 'shape', ...event.detail }));
+  const shapeStatus = document.createElement('small');
+  shapeStatus.setAttribute('role', 'status');
+  $('#planetForm')?.after(shapeStatus);
   document.querySelectorAll('a[href="states.html"]').forEach(link => link.setAttribute('hidden', ''));
   // The app asks the sky to show again (Dock → 우주로) and to reset after an entry.
   window.addEventListener('message', event => {
     if (event.origin !== location.origin || event.data?.source !== 'story-app') return;
+    if (event.source !== host) return;
+    if (event.data.type === 'shape-error') shapeStatus.textContent = '모양 저장 실패 · 다시 선택해 주세요';
+    if (event.data.type === 'shape-saved') shapeStatus.textContent = '저장됨';
     if (event.data.type === 'reset') {
       document.getAnimations().forEach(animation => animation.cancel());
       mock.flyOut?.();

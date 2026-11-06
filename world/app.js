@@ -483,7 +483,7 @@ async function selectWorld(index,animate=true,target=1) {
   $('#planetHit').setAttribute('aria-label',project.name+' 집필하기');
   state.goalTarget=Math.max(100000,Math.round(project.text/Math.max(1,project.growth)*100));
   updateGrowth(project.growth);
-  await planet.setForm(project.form,project.seed||defaultSeeds[project.form]);
+  await planet.setForm(project.form,project.seed??defaultSeeds[project.form]);
   updateGrowth(project.growth);
   $('#planet').style.visibility='visible';
   $('#universe').hidden=false;
@@ -673,6 +673,7 @@ async function chooseForm(isNew) {
     }
     projects[selectedProject].form=chosen;
     projects[selectedProject].seed=seeds[chosen];
+    window.dispatchEvent(new CustomEvent('planet-shape', { detail: { id: projects[selectedProject].id, form: chosen, seed: seeds[chosen] } }));
     preview.stop();
     closeDialog();
     await planet.setForm(chosen,seeds[chosen]);
