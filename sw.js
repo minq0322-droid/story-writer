@@ -1,7 +1,7 @@
 
 const PREFIX = 'story-app-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIX + 'c68b771edbf3';
-const FILES = ["index.html","manifest.webmanifest","icon.svg","assets/index-CLwfct6Y.css","assets/index-BOA8zpCe.js","assets/browser-tU0hw4UC.js","assets/worker-sYvNOcMT.js"].map(path => new URL(path, self.registration.scope).href);
+const CACHE = PREFIX + '5979a600507f';
+const FILES = ["index.html","manifest.webmanifest","icon.svg","assets/index-D7W4R2Wh.css","assets/index-Bl5YtePR.js","assets/browser-30URg3Bj.js","assets/worker-sYvNOcMT.js"].map(path => new URL(path, self.registration.scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
