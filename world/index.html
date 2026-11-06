@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>이야기의 궤도 — 시안 v3</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="symbol-bank" aria-hidden="true"><defs>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 1c1.4 7.3 3.7 9.6 11 11-7.3 1.4-9.6 3.7-11 11C10.6 15.7 8.3 13.4 1 12 8.3 10.6 10.6 8.3 12 1Z"/></symbol>
+    <symbol id="ideas-icon" viewBox="0 0 32 32"><path d="m6 24 8-17 12 16M6 24l20-1M14 7l3 11"/><circle cx="6" cy="24" r="2"/><circle cx="14" cy="7" r="2"/><circle cx="26" cy="23" r="2"/></symbol>
+    <symbol id="editor-icon" viewBox="0 0 32 32"><path d="M7 5h18v22H7ZM11 11h10M11 16h7M11 21h9"/></symbol>
+    <symbol id="plot-icon" viewBox="0 0 32 32"><path d="M5 8h22M5 16h22M5 24h22M11 5v22M22 5v22"/><circle cx="16" cy="16" r="2"/></symbol>
+    <symbol id="cast-icon" viewBox="0 0 32 32"><circle cx="12" cy="11" r="4"/><path d="M5 25c1-5 4-8 7-8s6 3 7 8M21 9.5a3.5 3.5 0 0 1 0 7M24 25c-.5-3-1.8-5.3-3.6-6.6"/></symbol><symbol id="board-icon" viewBox="0 0 32 32"><path d="M8 5h16v23l-8-6-8 6ZM12 10h8M12 15h6"/></symbol>
+    <symbol id="analysis-icon" viewBox="0 0 32 32"><path d="M4 7c5-2 8-1 12 2 4-3 7-4 12-2v19c-5-2-8-1-12 1-4-2-7-3-12-1ZM16 9v18"/></symbol>
+    <symbol id="universe-icon" viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="15" ry="6" transform="rotate(-30 16 16)"/><circle cx="16" cy="16" r="9"/><circle cx="27" cy="9" r="2"/></symbol>
+  </defs></svg>
+
+  <div id="planet" class="planet-shared" aria-hidden="true"><img id="planetFallback" src="assets/bodies/0-100.webp" alt=""><canvas id="planetCanvas"></canvas></div>
+  <section id="wholeSky" class="whole-sky" aria-label="작가의 전체 우주"><canvas id="skyCanvas"></canvas><header class="sky-head"><span class="brand"><svg><use href="#star"/></svg> 이야기의 궤도</span><div><a href="states.html">상태 모아보기</a><button data-action="theme">밤 / 낮</button><button id="skyNew" aria-label="새 작품 만들기">＋</button></div></header><div class="sky-title"><h1>내가 쓰는<br>모든 세계</h1><p>여섯 개의 세계가 자라고 있습니다.</p></div><div id="projectLabels" class="project-labels"></div><footer class="sky-foot"><span>작품을 눌러 가까이</span><span>스크롤 · 두 손가락으로 거리 조절</span><span id="skyTotals">465,800자　7권　343개의 아이디어</span></footer></section>
+  <section id="universe" class="universe" aria-label="작품 우주">
+    <div class="stars" id="stars"></div>
+    <header class="universe-head"><span class="brand"><svg><use href="#star"/></svg> 이야기의 궤도</span><div><a href="states.html">상태 모아보기</a><button id="themeEntry" data-action="theme">밤 / 낮</button><button id="planetForm">행성 모양</button></div></header>
+    <div class="universe-title"><button id="skyBack" class="sky-back">↖ 모든 세계</button><h1 id="worldTitle">조수의<br>기록</h1><p>사라진 바다를 기억하는 사람들.</p></div>
+    <div class="planet-orbit-field" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b class="orbit-moon amber"></b><b class="orbit-moon violet"></b><b class="orbit-moon green"></b></div>
+    <button id="planetHit" class="planet-hit" aria-label="조수의 기록 집필하기"></button>
+    <button id="previousWorld" class="neighbor previous"><img alt=""><span></span></button>
+    <button id="nextWorld" class="neighbor next"><img alt=""><span></span></button>
+    <button id="previousPlanet" class="planet-arrow previous" aria-label="이전 작품">‹</button>
+    <button id="nextPlanet" class="planet-arrow next" aria-label="다음 작품">›</button>
+    <div id="projectInfo" class="project-info"><div class="project-stats"><span>분량<strong id="universeCount">64,000자</strong></span><span>장 수<strong>12장</strong></span><span>오늘<strong>1,280자</strong></span></div><p class="enter-hint">행성을 누르면 마지막 문장으로 돌아갑니다.</p></div>
+    <footer class="universe-foot"><div class="growth-control"><label for="growth">세계의 성장 <output id="growthValue">64%</output></label><input id="growth" type="range" min="0" max="100" value="64"><div><span>암석</span><span>바다</span><span>생명</span></div><p id="growthCaption">대륙에 첫 숲이 자랍니다.</p></div></footer>
+  </section>
+  <aside class="map-credit">지도 원본: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noreferrer">Solar System Scope</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a> · NASA 자료 기반 · 시드 변형</aside>
+  <div id="cloudVeil" class="cloud-veil" hidden><span>대기권을 지나고 있습니다</span><button id="skipEntry">건너뛰기</button></div>
+
+  <main id="workspace" class="workspace" hidden>
+    <header class="topbar"><button id="libraryButton" aria-label="보관함 열기"><svg><use href="#star"/></svg></button><span class="project-name">조수의 기록</span><span class="slash">/</span><span id="sectionName">편집기</span><span id="tonightMoon" class="tonight-moon" role="img"></span><span id="nightDate" class="night-date"></span><span id="saveStatus" class="save-status" role="status">저장됨</span><div class="top-actions" id="normalActions"><button id="memoButton" aria-label="선택한 문장에 메모"><svg><use href="#board-icon"/></svg></button><button id="witButton">위트 시안</button><button id="viewButton">보기 <span>⌄</span></button><button id="layoutButton">레이아웃 <span>⌄</span></button><button id="themeButton" data-action="theme">낮으로</button></div><div id="editActions" class="top-actions" hidden><button id="saveLayout" class="primary">저장하기</button><button id="saveAsLayout">새 이름으로 저장</button><button id="cancelLayout">취소</button></div></header>
+    <div id="libraryEdge" class="library-edge"></div><aside id="library" class="library" aria-label="보관함"><div class="pane-head">보관함</div><button class="menu-row active" data-library="all">모든 챕터 <span>12</span></button><button class="menu-row" data-library="recent">최근 7일 <span>3</span></button><div class="pane-head">조수의 기록</div><button class="menu-row" data-library="volume">1권 <span>6</span></button><button class="menu-row" data-library="resource">자료 시트 <span>2</span></button><button class="menu-row" data-library="keywords">키워드 <span>4</span></button><div id="libraryResult" class="small-copy">왼쪽 가장자리에서 보관함을 엽니다.</div></aside>
+
+    <div id="editorScreen" class="screen editor-screen active">
+      <aside id="chaptersPane" class="chapters-pane"><div class="pane-head"><span>챕터</span><button id="openPlotTable" class="pane-link" data-plot-table>플롯 표</button><button id="addChapter" aria-label="챕터 추가">＋</button></div><div class="volume-row">1권 <span>첫 물결</span></div><div id="chapterList"></div><div class="chapter-bottom"><span class="star-glyph">✦</span><span>마지막으로 쓰던 곳이 여기 있습니다.</span></div></aside>
+      <section id="editorColumn" class="editor-column"><aside id="plotBar" class="plot-bar" hidden></aside><div id="manuscriptPane" class="manuscript-pane"><div class="pane-head"><span id="chapterHeading">제3장　물이 없는 항구</span><span id="editorMeta">본문</span></div><div id="writingScroll" class="writing-scroll"><article id="manuscript" class="manuscript" contenteditable="true" spellcheck="false" aria-label="원고 편집기"></article></div><div class="editor-foot"><span id="wordCount">2,460자</span><span>온라인 시안</span><span>문장을 선택해 상단 메모</span></div></div></section>
+      <aside id="dashboard" class="dashboard"><div class="pane-head">대시보드</div><button id="goalButton" class="goal-block" aria-label="목표 자세히 보기"><span id="goalAnchor" class="goal-anchor"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="48" class="goal-track"/><circle id="goalArc" cx="52" cy="52" r="48" class="goal-arc"/></svg></span><span class="goal-numbers"><span>목표</span><strong id="goalCount">64,000자</strong><span>100,000자까지</span><span id="goalPercent" class="blue-text">64%의 세계</span></span></button><div class="dashboard-row"><span>오늘</span><span>1,280 / 1,500자</span></div><div class="daily-bar"><i></i></div><div class="pane-head">개요</div><div id="dashboardOutline" class="dashboard-outline"></div><div class="pane-head">연결된 실</div><div id="dashboardThreads" class="thread-list"></div><div class="pane-head">기록</div><div class="dashboard-row"><span>읽는 시간</span><span>약 8분</span></div><div class="dashboard-row"><span>예상 책 분량</span><span>약 128쪽</span></div><div class="quiet-orbit"><svg viewBox="0 0 220 110"><path d="M-10 100Q100-50 230 75"/><path d="m30 80 60-40 60 16 40-40" class="constellation"/><use href="#star" x="85" y="35" width="10" height="10"/></svg><span>다음 궤도까지 36,000자</span></div></aside>
+    </div>
+
+    <section id="ideasScreen" class="screen ideas-screen" hidden><div class="section-toolbar"><span>아이디어 노트</span><div class="segmented"><button id="notesListButton" class="active">목록</button><button id="notesSkyButton">별자리</button></div><button id="captureButton" class="primary">바로 적기 <kbd>Alt N</kbd></button></div><div class="ideas-layout"><div class="notes-main"><div class="capture-inline"><input id="quickNote" aria-label="새 아이디어" placeholder="떠오른 생각을 바로 적고 Enter"><span>↵</span></div><div id="notesList" class="notes-list"></div><div id="notesSky" class="notes-sky" hidden></div></div><aside class="link-targets"><div class="pane-head">끌어 놓아 연결</div><p>아이디어의 별을 아래로 옮기세요.</p><div class="drop-target" data-target="chapter">✦ 제3장 물이 없는 항구</div><div class="drop-target" data-target="thread">실 / 잃어버린 지도</div><div class="drop-target" data-target="clue">떡밥 / 젖지 않는 편지</div><div id="linkResult" class="link-result">연결하면 세부 전개에도 나타납니다.</div><div class="pane-head">키워드</div><button class="menu-row keyword-filter" data-keyword="전체">전체</button><button class="menu-row keyword-filter" data-keyword="바다">바다</button><button class="menu-row keyword-filter" data-keyword="기억">기억</button></aside></div></section>
+    <section id="plotScreen" class="screen plot-screen" hidden><div class="section-toolbar plot-toolbar"><span>플롯</span><div id="plotFilters" class="plot-filters" role="toolbar" aria-label="서브플롯 필터"></div><button id="manageSubplots">서브플롯 관리</button><button id="stageToggle">발단~결말</button><button id="addPlotChapter" class="primary">+ 챕터</button></div><div class="plot-table-wrap"><table class="plot-table"><thead><tr><th>챕터</th><th>메인 플롯</th><th>서브 플롯</th></tr></thead><tbody id="plotRows"></tbody></table></div><div class="table-foot"><svg><use href="#star"/></svg><span>셀을 눌러 바로 수정할 수 있습니다.</span><span id="plotSaved">저장됨</span></div></section>
+    <section id="castScreen" class="screen cast-screen" hidden><div class="section-toolbar"><span>인물·장소</span><div class="segmented"><button id="castCharacters" class="active">등장인물</button><button id="castPlaces">장소</button></div><button id="addCast" class="primary">+ 추가</button></div><div class="cast-layout"><div id="castList" class="cast-list"></div><div id="castCard" class="cast-card"></div></div></section><section id="boardScreen" class="screen board-screen" hidden><div class="section-toolbar board-toolbar"><span>작업보드</span><div id="boardFilters" class="board-filters" role="toolbar" aria-label="메모 구분"></div><div class="segmented"><button id="pendingMarks" class="active">할 일</button><button id="finishedMarks">완료</button></div><button id="addCategory">+ 구분</button></div><div class="board-layout"><div class="board-stack"><svg id="boardConstellation" class="board-constellation" aria-hidden="true"></svg><div id="marksList" class="marks-list"></div></div></div></section>
+    <section id="analysisScreen" class="screen analysis-screen" hidden><div class="section-toolbar"><span>다른 작품 분석</span><button id="newAnalysis" class="primary">분석 노트 만들기</button></div><div class="analysis-body"><span class="star-glyph">✦</span><p>읽으며 발견한 구조를 남기세요.</p><p class="small-copy">가상의 작품으로 분석 노트를 시작합니다.</p><div id="analysisNotes"></div></div></section>
+
+    <div id="layoutOverlay" class="layout-overlay" hidden><div id="boundaryChapter" class="boundary vertical" data-boundary="chapter"></div><button class="boundary-grip grip-chapter" data-grip="chapter" aria-label="챕터 너비 조절">↔</button><span class="boundary-label label-chapter" data-label="chapter">206px</span><div id="boundaryDashboard" class="boundary vertical" data-boundary="dashboard"></div><button class="boundary-grip grip-dashboard" data-grip="dashboard" aria-label="대시보드 너비 조절">↔</button><span class="boundary-label label-dashboard" data-label="dashboard">258px</span><div id="boundaryPlot" class="boundary vertical" data-boundary="plot" hidden></div><button class="boundary-grip grip-plot" data-grip="plot" aria-label="세부 전개 크기 조절" hidden>↔</button><span class="boundary-label label-plot" data-label="plot" hidden>202px</span><div id="writingBoundary" class="writing-boundary" data-boundary="writing"></div><button class="boundary-grip grip-writing" data-grip="writing" aria-label="원고 폭 조절">↔</button><span class="boundary-label label-writing" data-label="writing">글 영역</span></div>
+    <aside id="layoutTools" class="layout-tools" hidden></aside>
+    <div id="focusHint" class="focus-hint" hidden>화면 가운데의 빛을 따라 씁니다.<button id="exitFocus">집중 끝내기 <kbd>Esc</kbd></button></div>
+  </main>
+
+  <div id="dockEdge" class="dock-edge" hidden></div><nav id="dock" class="dock" aria-label="주요 화면" hidden></nav>
+  <div id="popover" class="popover" hidden></div>
+  <div id="memoCard" class="memo-card" role="dialog" aria-label="메모 남기기" hidden></div>
+  <div id="modalShade" class="modal-shade" hidden><div id="dialog" class="dialog" role="dialog" aria-modal="true"></div></div>
+  <div id="bookPreview" class="book-preview" hidden><div class="topbar"><span>책 미리보기</span><span class="small-copy">134 × 200mm / 10pt / 170%</span><div class="top-actions"><button id="bookTheme">낮 / 밤</button><button id="closeBook">편집기로 <kbd>Esc</kbd></button></div></div><div id="bookSpread" class="book-spread"></div><footer class="book-controls"><button id="prevPage" aria-label="이전 쪽">←</button><span id="pageCount"></span><button id="nextPage" aria-label="다음 쪽">→</button></footer></div>
+  <div id="writingComet" class="writing-comet" hidden></div><div id="ideaSpark" class="idea-spark" role="status" hidden></div><div id="toast" class="toast" role="status" hidden></div>
+  <script>window.__storyWorlds = window.parent !== window ? window.parent.__storyWorlds : undefined;</script>
+<script type="module" src="app.js"></script>
+<script type="module" src="embed.js"></script>
+</body>
+</html>
+
