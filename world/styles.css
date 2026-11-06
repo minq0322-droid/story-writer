@@ -3014,6 +3014,17 @@ body:has(#wholeSky[hidden]):has(#universe[hidden]) .map-credit { display: none; 
   .universe-title { top: 9%; }
   .project-info { top: 18%; }
 }
+@media (min-width: 1024px) {
+  .universe, .planet-shared { --body-size: min(43.4vh, 36.4vw); }
+  .planet-hit {
+    width: var(--body-size);
+    height: var(--body-size);
+    left: calc(50% - var(--body-size) / 2);
+    top: calc(54% - var(--body-size) / 2);
+  }
+  .universe h1 { font-family: var(--display); font-size: clamp(35.2px, 4.32vw, 60.8px); }
+  .project-info { top: 23%; }
+}
 
 /* Memo card: floats beside the passage, no shade behind it. */
 .memo-card {

@@ -520,6 +520,15 @@ export class RealPlanet {
       this.aura.scale.set(3.5, 3.5, 1);
       this.aura.position.z = -1.5;
       this.group.add(this.aura);
+      // Three reusable sprites share the existing glow texture; no per-frame allocation.
+      this.burstClock = 0;
+      this.nextBurst = 1.2;
+      this.bursts = Array.from({ length: 3 }, () => {
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.aura.material.map, color: 0xffb34d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+        sprite.visible = false;
+        this.scene.add(sprite);
+        return { sprite, age: 2, duration: 1, angle: 0, height: 0, drift: 0 };
+      });
       this.rings = new THREE.Mesh(new THREE.RingGeometry(1.25, 2.1, 192), new THREE.ShaderMaterial({ uniforms: { ring: { value: null }, lightDir: { value: this.lightDir }, center: { value: new THREE.Vector3() }, opacity: { value: 1 } }, vertexShader: vertex, fragmentShader: ringFragment, side: THREE.DoubleSide, transparent: true, depthWrite: false }));
       const positions = this.rings.geometry.attributes.position;
       const uv = this.rings.geometry.attributes.uv;
@@ -649,6 +658,7 @@ export class RealPlanet {
   setGrowth(value) {
     this.growth = Math.min(100, Math.max(0, value)) / 100;
     if (this.isFallback) return this.updateImage();
+    if (this.growth >= .25) this.bursts.forEach(({ sprite }) => { sprite.visible = false; });
     const g = this.growth;
     this.uniforms.growth.value = g;
     const molten = 1 - smooth(0, .3, g);
@@ -683,6 +693,33 @@ export class RealPlanet {
     this.uniforms.cloudTurn.value = this.turn * .04;
     this.renderer.render(this.scene, this.camera);
   }
+  erupt(dt) {
+    if (this.reduced || this.isFallback || this.growth >= .25) return;
+    this.burstClock += dt;
+    if (this.burstClock >= this.nextBurst) {
+      this.nextBurst = this.burstClock + 2.6 + Math.random() * 2.4;
+      const count = 1 + Math.floor(Math.random() * 3);
+      this.bursts.forEach((burst, index) => {
+        burst.age = index < count ? 0 : 2;
+        burst.duration = .8 + Math.random() * .5;
+        // Upper-left limb faces the existing light (-.78, .34, .52).
+        burst.angle = 1.4 + Math.random() * 1.8;
+        burst.height = .08 + Math.random() * .14;
+        burst.drift = (Math.random() - .5) * .12;
+      });
+    }
+    for (const burst of this.bursts) {
+      burst.age += dt;
+      const t = burst.age / burst.duration;
+      burst.sprite.visible = t < 1;
+      if (t >= 1) continue;
+      const radius = .99 + burst.height * 4 * t * (1 - t);
+      const angle = burst.angle + burst.drift * t;
+      burst.sprite.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, .16);
+      burst.sprite.scale.setScalar(.035 + .025 * Math.sin(Math.PI * t));
+      burst.sprite.material.opacity = Math.sin(Math.PI * t);
+    }
+  }
   snapshot(size = 320) {
     if (this.isFallback) return snapshotPath(this.form, this.growth * 100, this.seed);
     this.render();
@@ -701,6 +738,7 @@ export class RealPlanet {
       if (this.last) this.frames.push(dt);
       if (this.frames.length > 360) this.frames.shift();
       this.turn += Math.min(dt, 50) * .000018;
+      this.erupt(Math.min(dt, 50) / 1000);
       if (this.renderPreviews) this.renderPreviews();
       else this.render();
       this.last = now;
@@ -715,6 +753,7 @@ export class RealPlanet {
   stop() {
     this.active = false;
     cancelAnimationFrame(this.frameId);
+    this.bursts?.forEach(({ sprite }) => { sprite.visible = false; });
   }
   dispose() {
     this.disposed = true;
