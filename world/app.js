@@ -1,7 +1,7 @@
-import { RealPlanet as LivingPlanet, forms, defaultSeeds, snapshotPath } from './planet.js?v=2d40a73d2818';
-import { AuthorSky, projects } from './sky.js?v=2d40a73d2818';
-import { cast, castFields, appearances } from './cast.js?v=2d40a73d2818';
-import { applyHeadingMarks, headingsOf } from './headings.js?v=2d40a73d2818';
+import { RealPlanet as LivingPlanet, forms, defaultSeeds, snapshotPath } from './planet.js?v=03f01c489f26';
+import { AuthorSky, projects } from './sky.js?v=03f01c489f26';
+import { cast, castFields, appearances } from './cast.js?v=03f01c489f26';
+import { applyHeadingMarks, headingsOf } from './headings.js?v=03f01c489f26';
 
 
 const $ = (selector, root = document) => root.querySelector(selector);

@@ -486,9 +486,9 @@ export class RealPlanet {
     this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     try {
       if (new URLSearchParams(location.search).has('fallback')) throw new Error('정적 모드');
-      this.renderer = new THREE.WebGLRenderer({ canvas: element.querySelector('canvas'), alpha: true, antialias: !this.mobile, preserveDrawingBuffer: true, powerPreference: this.mobile ? 'low-power' : 'high-performance' });
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.mobile ? 1 : 2));
-      this.renderer.setSize(this.mobile ? 512 : 1000, this.mobile ? 512 : 1000, false);
+      this.renderer = new THREE.WebGLRenderer({ canvas: element.querySelector('canvas'), alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: this.mobile ? 'low-power' : 'high-performance' });
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.mobile ? 1.75 : 2));
+      this.renderer.setSize(1000, 1000, false);
       this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
       this.scene = new THREE.Scene();
       // A common extent keeps every body the same size, including both rings.
@@ -503,10 +503,10 @@ export class RealPlanet {
         rimColor: { value: new THREE.Vector3() }, cloudTint: { value: new THREE.Vector3() }, flowColor: { value: new THREE.Vector3() },
         rimPower: { value: 3.2 }, exposure: { value: 1 }, growth: { value: 1 }, recipe: { value: 1 }
       };
-      this.sphere = new THREE.Mesh(new THREE.SphereGeometry(1, this.mobile ? 48 : 96, this.mobile ? 32 : 64), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: vertex, fragmentShader: planetFragment }));
+      this.sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: vertex, fragmentShader: planetFragment }));
       this.group.add(this.sphere);
       this.haloUniforms = { lightDir: { value: this.lightDir }, rimColor: this.uniforms.rimColor, molten: { value: 0 }, finish: { value: 0 } };
-      this.halo = new THREE.Mesh(new THREE.SphereGeometry(1.065, this.mobile ? 40 : 80, this.mobile ? 28 : 56), new THREE.ShaderMaterial({ uniforms: this.haloUniforms, vertexShader: vertex, fragmentShader: haloFragment, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      this.halo = new THREE.Mesh(new THREE.SphereGeometry(1.065, 80, 56), new THREE.ShaderMaterial({ uniforms: this.haloUniforms, vertexShader: vertex, fragmentShader: haloFragment, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
       this.group.add(this.halo);
       const auraCanvas = document.createElement('canvas');
       auraCanvas.width = auraCanvas.height = 128;
@@ -523,8 +523,8 @@ export class RealPlanet {
       this.group.add(this.aura);
       // Three reusable sprites share the existing glow texture; no per-frame allocation.
       this.burstClock = 0;
-      this.nextBurst = 1.2;
-      this.bursts = Array.from({ length: 9 }, () => {
+      this.nextBurst = .1;
+      this.bursts = Array.from({ length: 15 }, () => {
         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.aura.material.map, color: 0xffb34d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
         sprite.visible = false;
         this.scene.add(sprite);
@@ -585,7 +585,7 @@ export class RealPlanet {
       this.fallback(error.message);
     }
   }
-  bake(fragmentShader, uniforms, width = this.mobile ? 512 : 2048) {
+  bake(fragmentShader, uniforms, width = this.mobile ? 1536 : 2048) {
     const target = new THREE.WebGLRenderTarget(width, width / 2, { depthBuffer: false });
     target.texture.wrapS = THREE.RepeatWrapping;
     target.texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -610,7 +610,7 @@ export class RealPlanet {
     const start = performance.now();
     const base = { seed: { value: seed }, warp: { value: recipe.warp }, spin: { value: seed * .7 + form }, recipe: { value: recipe.recipe }, level: { value: recipe.level ?? .5 }, contrast: { value: recipe.contrast ?? 1 }, lights: { value: this.sources['earth_nightmap.jpg'] } };
     const surface = this.bake(bakeFragment, { ...base, source: { value: this.sources[recipe.map] } });
-    const ash = this.bake(ashFragment, { seed: { value: seed } }, this.mobile ? 256 : 1024);
+    const ash = this.bake(ashFragment, { seed: { value: seed } }, 1024);
     const detail = this.bake(detailFragment, { seed: { value: seed }, machine: { value: recipe.machine ? 1 : 0 }, lights: base.lights });
     const clouds = recipe.clouds ? this.bake(bakeFragment, { ...base, source: { value: this.sources['earth_clouds.jpg'] }, recipe: { value: 0 }, warp: { value: .14 }, seed: { value: seed + 50 } }) : null;
     this.renderer.getContext().finish();
@@ -698,7 +698,8 @@ export class RealPlanet {
     if (this.reduced || this.isFallback || this.growth >= .25) return;
     this.burstClock += dt;
     if (this.burstClock >= this.nextBurst) {
-      this.nextBurst = this.burstClock + .55 + Math.random() * .45;
+      this.nextBurst = this.burstClock + .45 + Math.random() * .25;
+      let spawned = 0;
       for (const burst of this.bursts) {
         if (burst.age < burst.duration) continue;
         burst.age = 0;
@@ -708,9 +709,9 @@ export class RealPlanet {
         burst.x = Math.cos(angle) * radial;
         burst.y = Math.sin(angle) * radial;
         burst.z = Math.sqrt(1 - radial * radial);
-        burst.height = .035 + Math.random() * .075;
+        burst.height = .08 + Math.random() * .12;
         burst.drift = (Math.random() - .5) * .055;
-        if (Math.random() > .5) break;
+        if (++spawned >= 3) break;
       }
     }
     for (const burst of this.bursts) {
@@ -720,8 +721,8 @@ export class RealPlanet {
       if (t >= 1) continue;
       const lift = burst.height * Math.sin(Math.PI * t);
       burst.sprite.position.set(burst.x + burst.drift * t, burst.y + lift, burst.z + .025 + lift * .5);
-      burst.sprite.scale.setScalar(.018 + .018 * Math.sin(Math.PI * t));
-      burst.sprite.material.opacity = Math.sin(Math.PI * t) * .95;
+      burst.sprite.scale.setScalar(.04 + .035 * Math.sin(Math.PI * t));
+      burst.sprite.material.opacity = Math.sin(Math.PI * t);
     }
   }
   snapshot(size = 320) {
@@ -746,7 +747,7 @@ export class RealPlanet {
       if (this.renderPreviews) this.renderPreviews();
       else this.render();
       this.last = now;
-      if (this.frames.length === 180 && this.frames.reduce((sum, value) => sum + value, 0) / 180 > 36 && !location.search.includes('webgl')) {
+      if (!this.mobile && this.frames.length === 180 && this.frames.reduce((sum, value) => sum + value, 0) / 180 > 36 && !location.search.includes('webgl')) {
         this.fallback('느린 렌더링 감지');
         return;
       }

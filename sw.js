@@ -1,7 +1,7 @@
 
 const PREFIX = 'story-app-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIX + '39d04882c5b9';
-const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","fonts/MaruBuri-Regular.woff2","fonts/MaruBuri-SemiBold.woff2","fonts/MaruBuri-Bold.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","assets/index-DWjaQhmz.css","assets/index-CSOylkS7.js","assets/browser-BCZSmTLf.js","assets/worker-a69VC7MF.js","assets/worker-3yAOa1C4.js"].map(path => new URL(path, self.registration.scope).href);
+const CACHE = PREFIX + '2d3375dc84a4';
+const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","fonts/MaruBuri-Regular.woff2","fonts/MaruBuri-SemiBold.woff2","fonts/MaruBuri-Bold.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","assets/index-BWJsXUyY.css","assets/index-D7VKDjgJ.js","assets/browser-DcFuKE-V.js","assets/worker-a69VC7MF.js","assets/worker-3yAOa1C4.js"].map(path => new URL(path, self.registration.scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });

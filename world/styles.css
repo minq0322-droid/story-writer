@@ -3660,3 +3660,20 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
   .universe-foot { bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); }
   .growth-control output { width: 66px; height: 66px; font-size: 19px; }
 }
+
+/* Clear overview, high-quality worlds; theme choices belong inside the writing app. */
+.sky-head [data-action='theme'], .universe-head [data-action='theme'], .sun-count { display: none !important; }
+.sky-title { left: 20px; right: 20px; top: calc(env(safe-area-inset-top, 0px) + 98px); text-align: center; }
+.sky-title h1 { white-space: nowrap; font-size: clamp(22px, 6.2vw, 40px); letter-spacing: .03em; }
+.sky-title p { display: none; }
+@media (max-width: 760px) {
+  .universe, .planet-shared { --body-size: min(36vh, 58vw); }
+  .sun-caption strong { font-size: 16px; font-weight: 500; }
+  .universe-title h1 { font-size: 26px; }
+  .project-caption { font-size: 16px; }
+  .sky-head .brand, .universe-head .brand { font-size: 16px; }
+}
+
+@media (max-width:760px) { .sun-body { width:80px; height:80px; } .project-caption { line-height:1.5; } }
+
+.sky-title::after { content:''; display:block; width:34px; height:34px; margin:12px auto 0; background:url('../logo-lotus.svg') center/contain no-repeat; opacity:.28; }

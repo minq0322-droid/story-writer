@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {snapshotPath} from './planet.js?v=2d40a73d2818';
+import {snapshotPath} from './planet.js?v=03f01c489f26';
 
 // Inside the app the real works are handed over by the page that embeds the sky (see embed.js).
 export const projects = window.__storyWorlds ?? [
@@ -50,8 +50,8 @@ export class AuthorSky {
       if(button) onSelect(Number(button.dataset.project));
     };
     try {
-      this.renderer=new THREE.WebGLRenderer({canvas:element,alpha:false,antialias:!this.mobile,powerPreference:'low-power'});
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.mobile ? .85 : 1.5));
+      this.renderer=new THREE.WebGLRenderer({canvas:element,alpha:false,antialias:true,powerPreference:'low-power'});
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.mobile ? 1.75 : 1.75));
       this.renderer.setClearColor(0x101010,1);
       this.scene=new THREE.Scene();
       this.camera=new THREE.PerspectiveCamera(37,innerWidth/innerHeight,.1,180);
@@ -78,7 +78,7 @@ export class AuthorSky {
     geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
     geometry.setAttribute('size',new THREE.Float32BufferAttribute(sizes,1));
     geometry.setAttribute('tint',new THREE.Float32BufferAttribute(colors,3));
-    return new THREE.Points(geometry,new THREE.ShaderMaterial({vertexShader:pointVertex,fragmentShader:pointFragment,uniforms:{ratio:{value:Math.min(devicePixelRatio,this.mobile ? .85 : 1.5)}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+    return new THREE.Points(geometry,new THREE.ShaderMaterial({vertexShader:pointVertex,fragmentShader:pointFragment,uniforms:{ratio:{value:Math.min(devicePixelRatio,this.mobile ? 1.75 : 1.75)}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
   }
   createStars() {
     this.depths=[];
@@ -168,7 +168,7 @@ export class AuthorSky {
       texture.colorSpace=THREE.SRGBColorSpace;
       const body=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
       const size=.24+Math.cbrt(project.text/186000)*.75;
-      body.scale.set(size*2.35*(this.mobile ? 1.5 : 1),size*2.35*(this.mobile ? 1.5 : 1),1);
+      body.scale.set(size*2.35*(this.mobile ? 3.4 : 1.2),size*2.35*(this.mobile ? 3.4 : 1.2),1);
       this.bodies.push(body);
       this.system.add(body);
       for(let j=0;j<project.volumes;j++) {
@@ -218,7 +218,7 @@ export class AuthorSky {
     context.fillStyle=gradient;
     context.fillRect(0,0,128,128);
     const star=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(starCanvas),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
-    star.scale.set(4.9,4.9,1);
+    star.scale.set(this.mobile ? 9.4 : 5.6,this.mobile ? 9.4 : 5.6,1);
     this.star=star;
     this.system.add(star);
     const tailP=[],tailS=[],tailC=[];
@@ -243,10 +243,15 @@ export class AuthorSky {
       sunButton.style.top=`${(-center.y*.5+.5)*innerHeight}px`;
       sunButton.querySelector('.sun-count').textContent=`떠오른 생각 ${projects.reduce((sum,p)=>sum+p.notes,0)}개`;
     }
+    const occupied=[];
+    if(this.mobile && sunButton) {
+      const x=parseFloat(sunButton.style.left),y=parseFloat(sunButton.style.top);
+      occupied.push({x:x-56,y:y-48,w:112,h:96},{x:x-65,y:y+44,w:130,h:34});
+    }
     projects.forEach((project,i)=>{
       const a=project.angle+this.time*.0007/(i+1);
       const body=this.bodies[i];
-      body.position.set(Math.cos(a)*project.radius,0,Math.sin(a)*project.radius);
+      body.position.set(Math.cos(a)*project.radius*(this.mobile ? .8 : 1),0,Math.sin(a)*project.radius*(this.mobile ? .8 : 1));
       const position=body.getWorldPosition(new THREE.Vector3()).project(this.camera);
       const label=this.labels.children[i];
       const px=(position.x*.5+.5)*innerWidth,py=(-position.y*.5+.5)*innerHeight;
@@ -258,16 +263,29 @@ export class AuthorSky {
         const offsets=[[-30,42],[-10,-55],[-55,56],[-60,-52],[-45,30],[-40,-70]];
         const [x,y]=offsets[i]||[-20,65];
         const caption=label.querySelector('.project-caption');
-        caption.style.left=(Math.max(16,Math.min(innerWidth-184,px-22+x))-px+22)+'px';
-        caption.style.width='168px';
-        caption.style.top=y+'px';
+        const width=Math.min(144,innerWidth*.37);
+        caption.style.width=width+'px';
+        const height=caption.offsetHeight || 48;
+        const candidates=[[x,y],[-width/2,-height-24],[-width/2,58],[38,-height/2],[-width-12,-height/2]];
+        let best;
+        for(const [dx,dy] of candidates) {
+          const area={x:Math.max(12,Math.min(innerWidth-width-12,px-22+dx)),y:Math.max(180,Math.min(innerHeight-height-20,py-22+dy)),w:width,h:height};
+          const score=occupied.reduce((sum,r)=>sum+Math.max(0,Math.min(area.x+area.w,r.x+r.w)-Math.max(area.x,r.x))*Math.max(0,Math.min(area.y+area.h,r.y+r.h)-Math.max(area.y,r.y)),0);
+          if(!best || score<best.score) best={...area,score};
+          if(score===0) break;
+        }
+        occupied.push(best);
+        caption.style.left=(best.x-px+22)+'px';
+        caption.style.top=(best.y-py+22)+'px';
         let leader=label.querySelector('.project-leader');
         if(!leader) {
           leader=document.createElementNS('http://www.w3.org/2000/svg','svg');
           leader.classList.add('project-leader');
-          leader.innerHTML='<path d="M22 22L'+(x+28)+' '+(y+(y<0?18:0))+'"/>';
+          leader.append(document.createElementNS('http://www.w3.org/2000/svg','path'));
           label.prepend(leader);
         }
+        leader.querySelector('path').setAttribute('d','M22 22L'+(best.x-px+22+width/2)+' '+(best.y-py+22+(best.y<py?height:0)));
+
       }
       else {
         const caption=label.querySelector('.project-caption');
@@ -293,8 +311,8 @@ export class AuthorSky {
     this.renderer.setSize(innerWidth,innerHeight,false);
     this.camera.aspect=innerWidth/innerHeight;
     if(innerWidth<760) {
-      this.camera.fov=50;
-      this.camera.position.set(0,16,32);
+      this.camera.fov=44;
+      this.camera.position.set(0,13,28);
       this.camera.lookAt(0,0,0);
       this.system.position.x=0;
     } else {
