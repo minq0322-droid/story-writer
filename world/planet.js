@@ -521,14 +521,61 @@ export class RealPlanet {
       this.aura.scale.set(3.5, 3.5, 1);
       this.aura.position.z = -1.5;
       this.group.add(this.aura);
-      // Three reusable sprites share the existing glow texture; no per-frame allocation.
-      this.burstClock = 0;
-      this.nextBurst = .1;
-      this.bursts = Array.from({ length: 15 }, () => {
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.aura.material.map, color: 0xffb34d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-        sprite.visible = false;
-        this.scene.add(sprite);
-        return { sprite, age: 2, duration: 1, angle: 0, height: 0, drift: 0 };
+      // Rooted, continuous lava streams. No detached particles or ballistic hops.
+      this.lavaTime = { value: 0 };
+      const jetVertex = `
+        varying vec2 flowUv;
+        uniform float flowTime;
+        uniform float phase;
+        void main() {
+          flowUv = uv;
+          vec3 p = position;
+          float rise = uv.y;
+          p.x *= mix(1.0, .24, rise);
+          p.x += sin(rise * 4.2 - flowTime * 2.4 + phase) * .10 * rise * rise;
+          p.z += rise * rise * .16;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+      `;
+      const jetFragment = `
+        varying vec2 flowUv;
+        uniform float flowTime;
+        uniform float phase;
+        void main() {
+          float edge = abs(flowUv.x - .5) * 2.0;
+          float stream = 1.0 - smoothstep(.55, 1.0, edge);
+          float tip = 1.0 - smoothstep(.72, 1.0, flowUv.y);
+          float moving = .5 + .5 * sin(flowUv.y * 21.0 - flowTime * 5.0 + phase);
+          vec3 orange = mix(vec3(1.0,.15,.015), vec3(1.0,.58,.10), moving * .45);
+          float core = (1.0 - smoothstep(.0,.55,edge)) * (1.0-flowUv.y*.7);
+          vec3 color = mix(orange, vec3(1.0,.88,.38), core);
+          gl_FragColor = vec4(color, stream * tip * .94);
+        }
+      `;
+      const jetGeometry = new THREE.PlaneGeometry(1, 1, 2, 12);
+      jetGeometry.translate(0, .5, 0);
+      const up = new THREE.Vector3(0, 1, 0);
+      this.lavaJets = Array.from({ length: 12 }, (_, index) => {
+        const angle = index * 2.3999632297;
+        const radial = .30 + (index % 4) * .17;
+        const normal = new THREE.Vector3(Math.cos(angle) * radial, Math.sin(angle) * radial, Math.sqrt(1 - radial * radial));
+        // Account for the initial sphere rotation so the initial vents face the viewer.
+        normal.applyAxisAngle(up, -this.turn);
+        const root = new THREE.Group();
+        root.position.copy(normal).multiplyScalar(1.002);
+        root.quaternion.setFromUnitVectors(up, normal);
+        const material = new THREE.ShaderMaterial({
+          uniforms: { flowTime: this.lavaTime, phase: { value: index * .73 } },
+          vertexShader: jetVertex, fragmentShader: jetFragment,
+          side: THREE.DoubleSide, transparent: true, depthWrite: false
+        });
+        const stream = new THREE.Mesh(jetGeometry, material);
+        const cross = new THREE.Mesh(jetGeometry, material);
+        cross.rotation.y = Math.PI / 2;
+        root.add(stream, cross);
+        root.visible = false;
+        this.sphere.add(root);
+        return { root, normal, height: .16 + (index % 3) * .045, width: .045 + (index % 2) * .012, phase: index * .73 };
       });
       this.rings = new THREE.Mesh(new THREE.RingGeometry(1.25, 2.1, 192), new THREE.ShaderMaterial({ uniforms: { ring: { value: null }, lightDir: { value: this.lightDir }, center: { value: new THREE.Vector3() }, opacity: { value: 1 } }, vertexShader: vertex, fragmentShader: ringFragment, side: THREE.DoubleSide, transparent: true, depthWrite: false }));
       const positions = this.rings.geometry.attributes.position;
@@ -659,7 +706,7 @@ export class RealPlanet {
   setGrowth(value) {
     this.growth = Math.min(100, Math.max(0, value)) / 100;
     if (this.isFallback) return this.updateImage();
-    if (this.growth >= .25) this.bursts.forEach(({ sprite }) => { sprite.visible = false; });
+    if (this.growth >= .25) this.lavaJets.forEach(({ root }) => { root.visible = false; });
     const g = this.growth;
     this.uniforms.growth.value = g;
     const molten = 1 - smooth(0, .3, g);
@@ -695,34 +742,15 @@ export class RealPlanet {
     this.renderer.render(this.scene, this.camera);
   }
   erupt(dt) {
-    if (this.reduced || this.isFallback || this.growth >= .25) return;
-    this.burstClock += dt;
-    if (this.burstClock >= this.nextBurst) {
-      this.nextBurst = this.burstClock + .45 + Math.random() * .25;
-      let spawned = 0;
-      for (const burst of this.bursts) {
-        if (burst.age < burst.duration) continue;
-        burst.age = 0;
-        burst.duration = .8 + Math.random() * .7;
-        const angle = Math.random() * Math.PI * 2;
-        const radial = Math.sqrt(Math.random()) * .88;
-        burst.x = Math.cos(angle) * radial;
-        burst.y = Math.sin(angle) * radial;
-        burst.z = Math.sqrt(1 - radial * radial);
-        burst.height = .08 + Math.random() * .12;
-        burst.drift = (Math.random() - .5) * .055;
-        if (++spawned >= 3) break;
-      }
+    if (this.reduced || this.isFallback || this.growth >= .25) {
+      this.lavaJets?.forEach(({ root }) => { root.visible = false; });
+      return;
     }
-    for (const burst of this.bursts) {
-      burst.age += dt;
-      const t = burst.age / burst.duration;
-      burst.sprite.visible = t < 1;
-      if (t >= 1) continue;
-      const lift = burst.height * Math.sin(Math.PI * t);
-      burst.sprite.position.set(burst.x + burst.drift * t, burst.y + lift, burst.z + .025 + lift * .5);
-      burst.sprite.scale.setScalar(.04 + .035 * Math.sin(Math.PI * t));
-      burst.sprite.material.opacity = Math.sin(Math.PI * t);
+    this.lavaTime.value += Math.max(0, Math.min(dt, .1));
+    for (const jet of this.lavaJets) {
+      const pulse = .78 + .22 * Math.sin(this.lavaTime.value * 1.9 + jet.phase);
+      jet.root.visible = true;
+      jet.root.scale.set(jet.width, jet.height * pulse, jet.width);
     }
   }
   snapshot(size = 320) {
@@ -758,7 +786,7 @@ export class RealPlanet {
   stop() {
     this.active = false;
     cancelAnimationFrame(this.frameId);
-    this.bursts?.forEach(({ sprite }) => { sprite.visible = false; });
+    this.lavaJets?.forEach(({ root }) => { root.visible = false; });
   }
   dispose() {
     this.disposed = true;
@@ -772,4 +800,5 @@ export class RealPlanet {
     this.renderer?.dispose();
   }
 }
+
 

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {snapshotPath} from './planet.js?v=03f01c489f26';
+import {snapshotPath} from './planet.js?v=9d9dfa056e00';
 
 // Inside the app the real works are handed over by the page that embeds the sky (see embed.js).
 export const projects = window.__storyWorlds ?? [
