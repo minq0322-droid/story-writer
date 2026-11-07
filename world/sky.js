@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {snapshotPath} from './planet.js';
+import {snapshotPath} from './planet.js?v=2d40a73d2818';
 
 // Inside the app the real works are handed over by the page that embeds the sky (see embed.js).
 export const projects = window.__storyWorlds ?? [
@@ -10,6 +10,7 @@ export const projects = window.__storyWorlds ?? [
   {name:'이름 없는 물결',subtitle:'첫 문장을 기다리는 작은 빛.',form:1,growth:2,text:1800,volumes:0,notes:9,today:180,radius:3.7,angle:.3},
   {name:'안개의 도서관',subtitle:'책을 빌리면 길 하나가 생기는 곳.',form:9,growth:86,text:186000,volumes:3,notes:119,today:0,radius:13.4,angle:5.5}
 ];
+const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const random=n=>{
   const x=Math.sin(n*78.233)*43758.5453;
   return x-Math.floor(x);
@@ -35,6 +36,7 @@ void main(){
 `;
 export class AuthorSky {
   constructor(element,onSelect,reduced) {
+    this.mobile=matchMedia('(max-width: 760px)').matches;
     this.element=element;
     this.reduced=reduced;
     this.onSelect=onSelect;
@@ -42,14 +44,14 @@ export class AuthorSky {
     this.frames=[];
     this.time=0;
     this.labels=document.querySelector('#projectLabels');
-    this.labels.innerHTML=projects.map((p,i)=>`<button class="project-body" data-project="${i}" aria-label="${p.name} 가까이 보기"><span class="project-caption">${p.name}</span><span class="hover-stats"><span>분량 ${p.text.toLocaleString('ko-KR')}자</span><span>${p.volumes}권 완성</span><span>오늘 ${p.today.toLocaleString('ko-KR')}자</span><span>아이디어 ${p.notes}</span></span></button>`).join('');
+    this.labels.innerHTML=projects.map((p,i)=>`<button class="project-body" data-project="${i}" aria-label="${escapeHTML(p.name)} 가까이 보기"><span class="project-caption">${escapeHTML(p.name)}</span><span class="hover-stats"><span>분량 ${p.text.toLocaleString('ko-KR')}자</span><span>${p.volumes}권 완성</span><span>오늘 ${p.today.toLocaleString('ko-KR')}자</span><span>아이디어 ${p.notes}</span></span></button>`).join('');
     this.labels.onclick=e=>{
       const button=e.target.closest('[data-project]');
       if(button) onSelect(Number(button.dataset.project));
     };
     try {
-      this.renderer=new THREE.WebGLRenderer({canvas:element,alpha:false,antialias:true,powerPreference:'low-power'});
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+      this.renderer=new THREE.WebGLRenderer({canvas:element,alpha:false,antialias:!this.mobile,powerPreference:'low-power'});
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.mobile ? .85 : 1.5));
       this.renderer.setClearColor(0x101010,1);
       this.scene=new THREE.Scene();
       this.camera=new THREE.PerspectiveCamera(37,innerWidth/innerHeight,.1,180);
@@ -76,13 +78,13 @@ export class AuthorSky {
     geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
     geometry.setAttribute('size',new THREE.Float32BufferAttribute(sizes,1));
     geometry.setAttribute('tint',new THREE.Float32BufferAttribute(colors,3));
-    return new THREE.Points(geometry,new THREE.ShaderMaterial({vertexShader:pointVertex,fragmentShader:pointFragment,uniforms:{ratio:{value:Math.min(devicePixelRatio,1.5)}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+    return new THREE.Points(geometry,new THREE.ShaderMaterial({vertexShader:pointVertex,fragmentShader:pointFragment,uniforms:{ratio:{value:Math.min(devicePixelRatio,this.mobile ? .85 : 1.5)}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
   }
   createStars() {
     this.depths=[];
     for(let depth=0;depth<3;depth++) {
       const positions=[],sizes=[],colors=[];
-      for(let i=0;i<550;i++) {
+      for(let i=0;i<(this.mobile ? 180 : 550);i++) {
         const n=i+depth*800;
         positions.push((random(n+1)-.5)*100,(random(n+200)-.5)*60,-20-depth*22);
         sizes.push(.6+Math.pow(random(n+300),5)*(depth===0?3.7:2.3));
@@ -155,17 +157,18 @@ export class AuthorSky {
     this.disks=[];
     projects.forEach((project,i)=>{
       const orbit=[];
-      for(let j=0;j<=256;j++) {
-        const a=j/256*Math.PI*2;
+      for(let j=0;j<=(this.mobile ? 72 : 256);j++) {
+        const a=j/(this.mobile ? 72 : 256)*Math.PI*2;
         orbit.push(new THREE.Vector3(Math.cos(a)*project.radius,0,Math.sin(a)*project.radius));
       }
       const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbit),new THREE.LineBasicMaterial({color:0x9a8870,transparent:true,opacity:.19}));
+      line.visible = !this.mobile;
       this.system.add(line);
       const texture=loader.load(project.preview || snapshotPath(project.form, project.growth, project.seed),()=>this.render());
       texture.colorSpace=THREE.SRGBColorSpace;
       const body=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
       const size=.24+Math.cbrt(project.text/186000)*.75;
-      body.scale.set(size*2.35,size*2.35,1);
+      body.scale.set(size*2.35*(this.mobile ? 1.5 : 1),size*2.35*(this.mobile ? 1.5 : 1),1);
       this.bodies.push(body);
       this.system.add(body);
       for(let j=0;j<project.volumes;j++) {
@@ -175,7 +178,7 @@ export class AuthorSky {
       }
       if(project.growth<5) {
         const positions=[],sizes=[],colors=[];
-        for(let n=0;n<700;n++) {
+        for(let n=0;n<(this.mobile ? 160 : 700);n++) {
           const a=random(n+61000)*Math.PI*2,r=.13+random(n+63000)*.25;
           positions.push(Math.cos(a)*r,(random(n+67000)-.5)*.025,Math.sin(a)*r);
           sizes.push(.6+random(n+70000)*1.2);
@@ -189,7 +192,7 @@ export class AuthorSky {
     });
     const positions=[],sizes=[],colors=[];
     this.asteroidCount=projects.reduce((sum,p)=>sum+p.notes*18,0);
-    for(let n=0;n<20000;n++) {
+    for(let n=0;n<(this.mobile ? 2500 : 20000);n++) {
       const a=random(n+75000)*Math.PI*2;
       const r=8.9+(random(n+78000)-.5)*.65;
       positions.push(Math.cos(a)*r,(random(n+81000)-.5)*.065,Math.sin(a)*r);
@@ -198,7 +201,7 @@ export class AuthorSky {
       colors.push(c,c*.87,c*.68);
     }
     this.belt=this.points(positions,sizes,colors);
-    this.belt.geometry.setDrawRange(0,this.asteroidCount);
+    this.belt.geometry.setDrawRange(0,Math.min(this.mobile ? 2500 : 20000,this.asteroidCount));
     this.system.add(this.belt);
     const starCanvas=document.createElement('canvas');
     starCanvas.width=128;
@@ -255,7 +258,8 @@ export class AuthorSky {
         const offsets=[[-30,42],[-10,-55],[-55,56],[-60,-52],[-45,30],[-40,-70]];
         const [x,y]=offsets[i]||[-20,65];
         const caption=label.querySelector('.project-caption');
-        caption.style.left=x+'px';
+        caption.style.left=(Math.max(16,Math.min(innerWidth-184,px-22+x))-px+22)+'px';
+        caption.style.width='168px';
         caption.style.top=y+'px';
         let leader=label.querySelector('.project-leader');
         if(!leader) {
@@ -289,8 +293,8 @@ export class AuthorSky {
     this.renderer.setSize(innerWidth,innerHeight,false);
     this.camera.aspect=innerWidth/innerHeight;
     if(innerWidth<760) {
-      this.camera.fov=55;
-      this.camera.position.set(0,23,48);
+      this.camera.fov=50;
+      this.camera.position.set(0,16,32);
       this.camera.lookAt(0,0,0);
       this.system.position.x=0;
     } else {
@@ -312,7 +316,7 @@ export class AuthorSky {
       this.system.clear();
       this.createSystem();
     }
-    this.labels.innerHTML=projects.map((p,i)=>`<button class="project-body" data-project="${i}" aria-label="${p.name} 가까이 보기"><span class="project-caption">${p.name.replace(/[<>&]/g,'')}</span><span class="hover-stats"><span>분량 ${p.text.toLocaleString('ko-KR')}자</span><span>${p.volumes}권 완성</span><span>오늘 ${p.today.toLocaleString('ko-KR')}자</span><span>아이디어 ${p.notes}</span></span></button>`).join('');
+    this.labels.innerHTML=projects.map((p,i)=>`<button class="project-body" data-project="${i}" aria-label="${escapeHTML(p.name)} 가까이 보기"><span class="project-caption">${escapeHTML(p.name)}</span><span class="hover-stats"><span>분량 ${p.text.toLocaleString('ko-KR')}자</span><span>${p.volumes}권 완성</span><span>오늘 ${p.today.toLocaleString('ko-KR')}자</span><span>아이디어 ${p.notes}</span></span></button>`).join('');
     const total=projects.reduce((sum,p)=>sum+p.text,0);
     const volumes=projects.reduce((sum,p)=>sum+p.volumes,0);
     const notes=projects.reduce((sum,p)=>sum+p.notes,0);
@@ -333,7 +337,7 @@ export class AuthorSky {
     const size=.24+Math.cbrt(p.text/186000)*.75;
     this.bodies[index].scale.set(size*2.35,size*2.35,1);
     this.asteroidCount=projects.reduce((sum,p)=>sum+p.notes*18,0);
-    this.belt.geometry.setDrawRange(0,Math.min(20000,this.asteroidCount));
+    this.belt.geometry.setDrawRange(0,Math.min(this.mobile ? 2500 : 20000,this.asteroidCount));
   }
   start() {
     if(this.active||this.isFallback||this.reduced) return;

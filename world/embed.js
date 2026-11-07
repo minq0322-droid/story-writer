@@ -33,9 +33,10 @@ if (host && window.__storyWorlds) {
     const box = planet.getBoundingClientRect();
     const dx = (innerWidth / 2 - (box.left + box.width / 2)) * .3;
     const dy = (innerHeight / 2 - (box.top + box.height / 2)) * .3 + box.height * .08;
-    const glide = 'cubic-bezier(.45,.05,.22,1)';
-    planet.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx * .55}px,${dy * .55}px) scale(1.08)`, opacity: 1, offset: .5 }, { transform: `translate(${dx}px,${dy}px) scale(1.15)`, opacity: 0 }], { duration: 2400, easing: glide, fill: 'forwards' });
-    $('#universe')?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1080, easing: 'ease-out', fill: 'forwards' });
+    const duration = matchMedia('(max-width: 700px)').matches ? 420 : 840;
+    const glide = 'cubic-bezier(.2,.75,.18,1)';
+    planet.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx * .55}px,${dy * .55}px) scale(1.08)`, opacity: 1, offset: .5 }, { transform: `translate(${dx}px,${dy}px) scale(1.15)`, opacity: 0 }], { duration, easing: glide, fill: 'forwards' });
+    $('#universe')?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: Math.min(420, duration), easing: 'ease-out', fill: 'forwards' });
   };
   mock.enterWorld = enter;
   $('#planetHit').onclick = enter;

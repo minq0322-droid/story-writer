@@ -1,7 +1,7 @@
-import { RealPlanet as LivingPlanet, forms, defaultSeeds, snapshotPath } from './planet.js';
-import { AuthorSky, projects } from './sky.js';
-import { cast, castFields, appearances } from './cast.js';
-import { applyHeadingMarks, headingsOf } from './headings.js';
+import { RealPlanet as LivingPlanet, forms, defaultSeeds, snapshotPath } from './planet.js?v=2d40a73d2818';
+import { AuthorSky, projects } from './sky.js?v=2d40a73d2818';
+import { cast, castFields, appearances } from './cast.js?v=2d40a73d2818';
+import { applyHeadingMarks, headingsOf } from './headings.js?v=2d40a73d2818';
 
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -199,6 +199,7 @@ function updateGrowth(value) {
   $('#growth').value = value;
   $('#growth').style.setProperty('--growth-stop', `${Math.min(100, value)}%`);
   $('#growthValue').textContent = `${percentage}%`;
+  $('.growth-control').style.setProperty('--growth', Math.min(100, value));
   $('#universeCount').textContent = `${state.characterCount.toLocaleString('ko-KR')}자`;
   $('.project-stats span:nth-child(2) strong').textContent=(projects[selectedProject].chapters??chapters.length)+'장';
   $('.project-stats span:nth-child(3) strong').textContent=projects[selectedProject].today.toLocaleString('ko-KR')+'자';
@@ -460,6 +461,7 @@ sunButton.onclick=async()=>{
   await enterWorld();
   sunButton.classList.remove('flaring');
 };
+$('#skyIdeas').onclick=()=>sunButton.click();
 const sky=new AuthorSky($('#skyCanvas'),index=>selectWorld(index),reduced);
 window.mockDiagnostics.sky=sky;
 if(new URLSearchParams(location.search).has('fallback')) sky.fallback();
@@ -518,7 +520,7 @@ function zoomFlight(from,to) {
   return new Promise(resolve=>{
     const start=performance.now();
     const tick=now=>{
-      const t=Math.min(1,(now-start)/1200);
+      const t=Math.min(1,(now-start)/(matchMedia('(max-width: 760px)').matches ? 420 : 700));
       let lo=0;
       let hi=1;
       for(let i=0;i<12;i++) {
