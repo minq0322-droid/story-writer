@@ -90,7 +90,7 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 .grid button img { display: block; width: 100%; aspect-ratio: 1; }
 .grid button[aria-pressed="true"] { border-color: #e7dcc466; color: var(--sand); background: #e7dcc40d; }
 @media (min-width: 900px) { html.full #picker { top: auto; bottom: 0; left: 50%; right: auto; width: 560px; margin-left: -280px; transform: translateY(105%); background: #141414f2; border-radius: 22px 22px 0 0; padding: 10px 24px 28px; } html.full #picker.open { transform: none; } html.full #pickScrim { display: block; } .grid { grid-template-columns: repeat(5, 1fr); } }
-.info em { display: block; margin-top: 14px; font: 400 14px/1.75 MaruBuri; font-style: normal; color: #e7dcc4d9; white-space: pre-line; }
+.info em { display: block; margin-top: 14px; font: 400 14px/1.75 MaruBuri; font-style: normal; color: #e7dcc4d9; white-space: pre-line; word-break: keep-all; text-wrap: balance; }
 .dots { position: absolute; bottom: calc(112px + env(safe-area-inset-bottom)); left: 0; right: 0; display: flex; gap: 8px; justify-content: center; }
 .dots i { width: 5px; height: 5px; border-radius: 3px; background: #e7dcc444; transition: width .4s var(--ease), background .4s; }
 .dots i.on { width: 18px; background: var(--sand); }
