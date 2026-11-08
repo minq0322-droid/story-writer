@@ -197,7 +197,8 @@ function buildSystem() {
   el('circle', { cx: C.x, cy: C.y, r: 5, fill: '#fff7e4' });
   const n = worlds.length, step = n > 1 ? (maxR - minR) / (n - 1) : 0;
   bodies = worlds.map((w, i) => {
-    const r = minR + step * i, f = weight(w), size = 3 + 6 * f;
+    // One work sits on a wide orbit instead of hugging the sun.
+    const r = n === 1 ? maxR * .62 : minR + step * i, f = weight(w), size = 3 + 6 * f;
     const ring = el('circle', { cx: C.x, cy: C.y, r, fill: 'none', stroke: '#e7dcc4', 'stroke-opacity': .1, 'stroke-width': 1 });
     const lg = el('linearGradient', { id: 't' + i, gradientUnits: 'userSpaceOnUse' }, defs);
     el('stop', { offset: 0, 'stop-color': w.p.col, 'stop-opacity': 0 }, lg); el('stop', { offset: 1, 'stop-color': w.p.col, 'stop-opacity': .8 }, lg);
@@ -210,7 +211,7 @@ function buildSystem() {
     el('circle', { r: size, fill: 'url(#sun)', opacity: .25 }, g);
     const label = el('text', { class: 'label', opacity: 0 }); label.textContent = w.title;
     const old = bodies[i];
-    const b = { w, i, r, size, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(r / minR, 1.5), g, halo, label, ring, trail, lg };
+    const b = { w, i, r, size, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, label, ring, trail, lg };
     g.addEventListener('click', () => open(i, g));
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i, g); } });
     g.addEventListener('pointerenter', () => hot(i)); g.addEventListener('focus', () => hot(i));
