@@ -159,8 +159,6 @@ const worlds = (embedded ? window.__storyWorlds.map(w => ({ id: w.id, title: w.n
   .map((w, i) => { const form = Number.isInteger(w.form) && w.form >= 0 && w.form < 10 ? w.form : i % 10; return { ...w, form, alt: typeof w.seed === 'number' && Math.abs(w.seed - defaultSeed(form)) > .01, p: forms[form] }; });
 // Planets are always complete. Length only makes them a little larger and brighter.
 const FULL = 300000;
-// Orbit labels use a short form: the first syllable of each word (별을 배달하는 우체국 → 별배우), at most four.
-const short = title => { const words = title.trim().split(/\s+/).filter(Boolean); return words.length > 1 ? words.slice(0, 4).map(word => [...word][0]).join('') : [...title.trim()].slice(0, 2).join(''); };
 const weight = w => Math.sqrt(Math.min(w.chars, FULL) / FULL);
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('ko-KR');
@@ -199,8 +197,14 @@ function buildSystem() {
   const maxR = Math.min(width / 2 - 24, area / 2 - 10), minR = maxR * .26;
   const defs = el('defs', {});
   defs.innerHTML = `<radialGradient id="sun"><stop offset="0" stop-color="#fff7e4"/><stop offset=".25" stop-color="#f4dfae"/><stop offset="1" stop-color="#f4dfae" stop-opacity="0"/></radialGradient><filter id="soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="3"/></filter>`;
-  el('circle', { cx: C.x, cy: C.y, r: maxR * .24, fill: 'url(#sun)', opacity: .55 });
-  el('circle', { cx: C.x, cy: C.y, r: 5, fill: '#fff7e4' });
+  // The sun opens the idea notes, as before.
+  const sun = el('g', { class: 'planet-dot', tabindex: 0, role: 'button', 'aria-label': '아이디어 노트 열기' });
+  el('circle', { cx: C.x, cy: C.y, r: maxR * .24, fill: 'url(#sun)', opacity: .55 }, sun);
+  el('circle', { cx: C.x, cy: C.y, r: 5, fill: '#fff7e4' }, sun);
+  el('circle', { cx: C.x, cy: C.y, r: Math.max(26, maxR * .16), fill: 'transparent' }, sun);
+  const ideasNow = () => post({ type: 'ideas', id: worlds[current]?.id });
+  sun.addEventListener('click', ideasNow);
+  sun.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ideasNow(); } });
   const n = worlds.length, step = n > 1 ? (maxR - minR) / (n - 1) : 0;
   bodies = worlds.map((w, i) => {
     // One work sits on a wide orbit instead of hugging the sun.
@@ -214,9 +218,8 @@ function buildSystem() {
     el('circle', { r: size * (1.8 + 1.4 * f), fill: w.p.col, opacity: .12 + .3 * f, filter: 'url(#soft)' }, g);
     const halo = el('circle', { r: size + 6, fill: 'none', stroke: w.p.col, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
     const img = el('image', { href: planetSrc(w, true), x: -size / SPHERE, y: -size / SPHERE, width: 2 * size / SPHERE, height: 2 * size / SPHERE }, g);
-    const label = el('text', { class: 'label', opacity: 0 }); label.textContent = short(w.title);
     const old = bodies[i];
-    const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, label, ring, trail, lg };
+    const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, ring, trail, lg };
     g.addEventListener('click', () => open(i, g));
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i, g); } });
     g.addEventListener('pointerenter', () => hot(i)); g.addEventListener('focus', () => hot(i));
@@ -226,7 +229,7 @@ function buildSystem() {
 }
 function hot(i) {
   current = i;
-  bodies.forEach(b => { const on = b.i === i; b.label.setAttribute('opacity', on ? 1 : .42); b.halo.setAttribute('stroke-opacity', on ? .6 : 0); b.ring.setAttribute('stroke-opacity', on ? .28 : .1); });
+  bodies.forEach(b => { const on = b.i === i; b.halo.setAttribute('stroke-opacity', on ? .6 : 0); b.ring.setAttribute('stroke-opacity', on ? .28 : .1); });
   document.querySelectorAll('.row').forEach((r, k) => r.classList.toggle('hot', k === i));
   const w = worlds[i]; if (!w) return;
   $('fN').textContent = `${String(i + 1).padStart(2, '0')} / ${String(worlds.length).padStart(2, '0')}`;
@@ -237,9 +240,6 @@ function hot(i) {
 function place(b) {
   const x = C.x + b.r * Math.cos(b.a), y = C.y + b.r * Math.sin(b.a);
   b.g.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-  const right = x < C.x + b.r * .6;
-  b.label.setAttribute('x', (right ? x + b.size + 9 : x - b.size - 9).toFixed(1)); b.label.setAttribute('y', (y + 4).toFixed(1));
-  b.label.setAttribute('text-anchor', right ? 'start' : 'end');
   const x0 = C.x + b.r * Math.cos(b.a - .7), y0 = C.y + b.r * Math.sin(b.a - .7);
   b.trail.setAttribute('d', `M${x0.toFixed(2)},${y0.toFixed(2)} A${b.r} ${b.r} 0 0 1 ${x.toFixed(2)},${y.toFixed(2)}`);
   b.lg.setAttribute('x1', x0); b.lg.setAttribute('y1', y0); b.lg.setAttribute('x2', x); b.lg.setAttribute('y2', y);
