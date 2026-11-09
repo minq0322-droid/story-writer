@@ -36,6 +36,9 @@ canvas.stars { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tints button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
 .tints i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px #ffffff33; }
 .tints button[aria-pressed="true"] i { box-shadow: 0 0 0 2px #0b0b0c, 0 0 0 4px var(--sand); }
+.tints .mix { width: 52px; height: 52px; border-radius: 50%; }
+.tints .mix img { width: 46px; height: 46px; object-fit: contain; border-radius: 50%; }
+.tints .mix[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--sand); }
 .tints .orig i { background: conic-gradient(#6fb6ff, #8fd48a, #f2cf4a, #f08a4e, #c49bff, #6fb6ff); }
 h1 { position: absolute; top: calc(74px + env(safe-area-inset-top)); left: 28px; margin: 0; font: 400 26px/1.3 MaruBuri; letter-spacing: .04em; }
 h1 small { display: block; font: 500 11px SUIT; letter-spacing: .2em; color: var(--dim); margin-top: 6px; }
@@ -90,7 +93,7 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 .comet { position: absolute; top: calc(82px + env(safe-area-inset-top)); right: 18px; min-height: 44px; padding: 0 12px; border: 0; background: none; font-size: 11px; letter-spacing: .12em; color: var(--dim); text-align: right; cursor: pointer; }
 .comet i { display: block; width: 130px; height: 1px; margin: 0 0 8px auto; background: linear-gradient(90deg, transparent, #f4e7c8); transform: rotate(-18deg); box-shadow: 0 0 6px #f4e7c8; animation: comet 9s var(--ease) infinite; }
 @keyframes comet { 0%, 70% { opacity: 0; transform: translate(60px, -20px) rotate(-18deg); } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-120px, 40px) rotate(-18deg); } }
-.stage { position: absolute; left: 0; right: 0; top: 18%; height: 40%; touch-action: pan-y; }
+.stage { position: absolute; left: 0; right: 0; top: 23.5%; height: 40%; touch-action: pan-y; }
 .track { position: absolute; inset: 0; display: flex; transition: transform .7s var(--ease); }
 .slot { flex: 0 0 100%; min-width: 0; height: 72%; display: grid; place-items: center; }
 .big { position: relative; width: var(--d); height: var(--d); transition: transform .7s var(--ease), opacity .7s; }
@@ -176,8 +179,12 @@ const defaultSeed = form => 11.3 + form * 5.1;
 const tints = [{ name: '본래 색', h: null }, { name: '푸른', h: 212 }, { name: '청록', h: 176 }, { name: '초록', h: 126 }, { name: '금빛', h: 44 }, { name: '주황', h: 22 }, { name: '붉은', h: 356 }, { name: '분홍', h: 326 }, { name: '보라', h: 272 }, { name: '은빛', h: 'silver' }];
 const hex = (h, s, l) => { const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };
 const tintOf = i => tints[i] ?? tints[0];
-const tintFilter = w => { const t = tintOf(w.tint); return t.h === null ? 'none' : t.h === 'silver' ? 'grayscale(1) brightness(1.12)' : `grayscale(1) sepia(1) saturate(2.4) hue-rotate(${t.h - 38}deg)`; };
-const paletteOf = w => { const t = tintOf(w.tint), base = forms[w.form]; return t.h === null ? base : { ...base, col: t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .66) }; };
+const MACHINE = 8;
+const blends = [{ name: '본래 배합', f: 'none', turn: 0 }, { name: '배합 2', f: 'hue-rotate(-35deg) saturate(1.1)', turn: -35 }, { name: '배합 3', f: 'hue-rotate(-95deg) saturate(1.05)', turn: -95 }, { name: '배합 4', f: 'hue-rotate(55deg) saturate(1.1)', turn: 55 }, { name: '배합 5', f: 'hue-rotate(115deg) saturate(1.15)', turn: 115 }, { name: '배합 6', f: 'hue-rotate(165deg) saturate(1.2)', turn: 165 }, { name: '옅은 배합', f: 'saturate(.55) brightness(1.08)', turn: 0 }, { name: '짙은 배합', f: 'saturate(1.65) contrast(1.06)', turn: 0 }];
+const choicesFor = form => form === MACHINE ? tints : blends;
+const tintFilter = w => { if (w.form !== MACHINE) return (blends[w.tint] ?? blends[0]).f; const t = tintOf(w.tint); return t.h === null ? 'none' : t.h === 'silver' ? 'grayscale(1) brightness(1.12)' : `grayscale(1) sepia(1) saturate(2.4) hue-rotate(${t.h - 38}deg)`; };
+const hueOf = col => { const r = parseInt(col.slice(1, 3), 16) / 255, g = parseInt(col.slice(3, 5), 16) / 255, b = parseInt(col.slice(5, 7), 16) / 255, max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min; if (!d) return 0; const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+const paletteOf = w => { const base = forms[w.form]; if (w.form !== MACHINE) { const b = blends[w.tint] ?? blends[0]; return b.turn ? { ...base, col: hex((hueOf(base.col) + b.turn + 360) % 360, .7, .66) } : base; } const t = tintOf(w.tint); return t.h === null ? base : { ...base, col: t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .66) }; };
 const readTint = id => { try { const v = localStorage.getItem('planet-tint-' + id); return v === null ? null : Number(v); } catch { return null; } };
 // Orbit spacing is a per-device preference, kept separately for PC and phone.
 const orbitKey = wide => 'orbit-gaps-' + (wide ? 'pc' : 'phone');
@@ -377,24 +384,31 @@ function openPicker() {
   const w = worlds[current];
   $('grid').innerHTML = forms.flatMap((form, k) => ['a', 'b'].map(v => `<button data-form="${k}" data-alt="${v === 'b'}" aria-pressed="${w.form === k && w.alt === (v === 'b')}"><img alt="" src="planets/${k}${v}-s.webp">${form.name}${v === 'b' ? ' Ⅱ' : ''}</button>`)).join('');
   $('grid').querySelectorAll('button').forEach(button => button.onclick = () => choose(+button.dataset.form, button.dataset.alt === 'true'));
-  $('grid').querySelectorAll('img').forEach(img => { img.style.filter = tintFilter(w); });
-  $('tints').innerHTML = tints.map((t, i) => `<button class="${t.h === null ? 'orig' : ''}" data-tint="${i}" aria-label="${t.name}" title="${t.name}" aria-pressed="${w.tint === i}" style="--c:${t.h === null ? 'none' : t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .62)}"><i></i></button>`).join('');
+  renderTints(w);
   $('tints').querySelectorAll('button').forEach(button => button.onclick = () => chooseTint(+button.dataset.tint));
   $('picker').classList.add('open'); $('pickScrim').classList.add('open');
+}
+function renderTints(w) {
+  $('tints').setAttribute('aria-label', w.form === MACHINE ? '행성 색' : '색 배합');
+  $('tints').innerHTML = w.form === MACHINE
+    ? tints.map((t, i) => `<button class="${t.h === null ? 'orig' : ''}" data-tint="${i}" aria-label="${t.name}" title="${t.name}" aria-pressed="${w.tint === i}" style="--c:${t.h === null ? 'none' : t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .62)}"><i></i></button>`).join('')
+    : blends.map((b, i) => `<button class="mix" data-tint="${i}" aria-label="${b.name}" title="${b.name}" aria-pressed="${w.tint === i}"><img alt="" src="${planetSrc(w, true)}" style="filter:${b.f}"></button>`).join('');
+  $('tints').querySelectorAll('button').forEach(button => button.onclick = () => chooseTint(+button.dataset.tint));
 }
 function chooseTint(tint) {
   const w = worlds[current];
   w.tint = tint;
   try { localStorage.setItem('planet-tint-' + w.id, String(tint)); } catch {}
   $('tints').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.tint === tint)));
-  $('grid').querySelectorAll('img').forEach(img => { img.style.filter = tintFilter(w); });
   choose(w.form, w.alt, true);
   post({ type: 'tint', id: w.id, tint });
 }
 function closePicker() { $('picker').classList.remove('open'); $('pickScrim').classList.remove('open'); }
 function choose(form, alt, quiet) {
   const w = worlds[current];
+  if (!quiet && form !== w.form && w.tint >= choicesFor(form).length) w.tint = 0;
   Object.assign(w, { form, alt });
+  if (!quiet) renderTints(w);
   w.p = paletteOf(w);
   bodies[current].img.style.filter = tintFilter(w);
   const big = document.querySelectorAll('.big')[current];
