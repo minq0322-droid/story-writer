@@ -203,7 +203,10 @@ function buildSystem() {
   svg.setAttribute('viewBox', `0 0 ${width} ${area}`);
   svg.innerHTML = '';
   C = { x: width / 2, y: area / 2 };
-  const maxR = Math.min(width / 2 - 24, area / 2 - 10), minR = maxR * .26;
+  // PC and phone are tuned separately: PC planets are drawn larger (PC.planet), the phone keeps 1.
+  const PC = { planet: Math.min(2.6, Math.max(1.8, area / 260)) };
+  const k = wide ? PC.planet : 1;
+  const maxR = Math.min(width / 2 - 24 - (k - 1) * 12, area / 2 - 10 - (k - 1) * 12), minR = maxR * .26;
   const defs = el('defs', {});
   defs.innerHTML = `<radialGradient id="sun"><stop offset="0" stop-color="#fff7e4"/><stop offset=".25" stop-color="#f4dfae"/><stop offset="1" stop-color="#f4dfae" stop-opacity="0"/></radialGradient><filter id="soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="3"/></filter>`;
   // The sun opens the idea notes, as before.
@@ -217,7 +220,7 @@ function buildSystem() {
   const n = worlds.length, step = n > 1 ? (maxR - minR) / (n - 1) : 0;
   bodies = worlds.map((w, i) => {
     // One work sits on a wide orbit instead of hugging the sun.
-    const r = n === 1 ? maxR * .62 : minR + step * i, f = weight(w), size = 5 + 6 * f;
+    const r = n === 1 ? maxR * .62 : minR + step * i, f = weight(w), size = (5 + 6 * f) * k;
     const ring = el('circle', { cx: C.x, cy: C.y, r, fill: 'none', stroke: '#e7dcc4', 'stroke-opacity': .1, 'stroke-width': 1 });
     const lg = el('linearGradient', { id: 't' + i, gradientUnits: 'userSpaceOnUse' }, defs);
     el('stop', { offset: 0, 'stop-color': w.p.col, 'stop-opacity': 0 }, lg); el('stop', { offset: 1, 'stop-color': w.p.col, 'stop-opacity': .8 }, lg);
@@ -225,7 +228,7 @@ function buildSystem() {
     const g = el('g', { class: 'planet-dot', tabindex: 0, role: 'button', 'aria-label': w.title + ' 열기' });
     el('circle', { r: Math.max(22, size + 12), fill: 'transparent' }, g);
     el('circle', { r: size * (1.8 + 1.4 * f), fill: w.p.col, opacity: .12 + .3 * f, filter: 'url(#soft)' }, g);
-    const halo = el('circle', { r: size + 6, fill: 'none', stroke: w.p.col, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
+    const halo = el('circle', { r: size + 6 * k, fill: 'none', stroke: w.p.col, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
     const img = el('image', { href: planetSrc(w, true), x: -size / sphereOf(w.form), y: -size / sphereOf(w.form), width: 2 * size / sphereOf(w.form), height: 2 * size / sphereOf(w.form) }, g);
     const old = bodies[i];
     const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, ring, trail, lg };
