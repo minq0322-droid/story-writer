@@ -24,6 +24,19 @@ canvas.stars { position: absolute; inset: 0; width: 100%; height: 100%; }
 .mark { display: flex; gap: 9px; align-items: center; font: 400 12px MaruBuri; letter-spacing: .3em; color: var(--sand); }
 .mark svg { width: 16px; height: 16px; }
 .head .round { width: 44px; height: 44px; font-size: 20px; }
+.head-tools { display: flex; gap: 8px; align-items: center; }
+.head .round.small svg { display: block; }
+.orbit-panel { position: absolute; z-index: 12; top: calc(72px + env(safe-area-inset-top)); right: 20px; display: grid; gap: 10px; width: 240px; padding: 14px 16px; border: 1px solid #e7dcc433; border-radius: 12px; background: #141414f2; font-size: 12px; letter-spacing: .06em; color: var(--sand); }
+.orbit-panel[hidden] { display: none; }
+.orbit-panel label { display: grid; gap: 6px; }
+.orbit-panel input { width: 100%; min-height: 32px; accent-color: #e7dcc4; }
+.orbit-panel button { justify-self: end; min-height: 32px; padding: 0 12px; border: 1px solid #e7dcc444; border-radius: 16px; background: none; color: var(--sand); font-size: 11px; cursor: pointer; }
+@media (max-width: 700px) { .orbit-panel { left: 20px; right: 20px; width: auto; } .orbit-panel input, .orbit-panel button { min-height: 44px; } }
+.tints { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 8px; }
+.tints button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
+.tints i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px #ffffff33; }
+.tints button[aria-pressed="true"] i { box-shadow: 0 0 0 2px #0b0b0c, 0 0 0 4px var(--sand); }
+.tints .orig i { background: conic-gradient(#6fb6ff, #8fd48a, #f2cf4a, #f08a4e, #c49bff, #6fb6ff); }
 h1 { position: absolute; top: calc(74px + env(safe-area-inset-top)); left: 28px; margin: 0; font: 400 26px/1.3 MaruBuri; letter-spacing: .04em; }
 h1 small { display: block; font: 500 11px SUIT; letter-spacing: .2em; color: var(--dim); margin-top: 6px; }
 svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
@@ -113,7 +126,8 @@ html.single .dots, html.single .nav { display: none; }
   <div class="sky"></div><canvas class="stars" id="stars"></canvas>
 
   <section class="orbit-view" id="orbitView">
-    <div class="head"><span class="mark"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="104" fill="currentColor"/></svg>이야기의 궤도</span><button class="round" id="newWork" aria-label="새 작품">＋</button></div>
+    <div class="head"><span class="mark"><svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="104" fill="currentColor"/></svg>이야기의 궤도</span><span class="head-tools"><button class="round small" id="orbitButton" aria-label="궤도 간격" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="10"/></svg></button><button class="round" id="newWork" aria-label="새 작품">＋</button></span></div>
+    <div class="orbit-panel" id="orbitPanel" hidden><label>태양과 첫 궤도 <input type="range" id="gapFirst" min="0" max="2" step="0.05"></label><label>궤도 사이 <input type="range" id="gapBetween" min="0.3" max="1.6" step="0.05"></label><button id="gapReset">기본값</button></div>
     <h1 id="headline">세계<small id="sub"></small></h1>
     <svg class="system" id="system"></svg>
     <button class="focus" id="focus"><span class="n" id="fN"></span><b id="fT"></b><span class="meta"><span id="fM"></span><span class="go">열기 ›</span></span><span class="line" id="fL"></span></button>
@@ -130,12 +144,19 @@ html.single .dots, html.single .nav { display: none; }
     <button class="nav l" id="prev" aria-label="이전 작품">‹</button><button class="nav r" id="next" aria-label="다음 작품">›</button>
     <div class="info" id="info"><h2></h2><p></p><em></em><button class="change" id="change">행성 바꾸기</button><small class="saved" id="saved" role="status"></small></div>
     <div class="scrim" id="pickScrim"></div>
-    <div class="sheet" id="picker" role="dialog" aria-label="행성 고르기"><div class="grip"></div><h3>행성 고르기</h3><div class="grid" id="grid"></div></div>
+    <div class="sheet" id="picker" role="dialog" aria-label="행성 고르기"><div class="grip"></div><h3>행성 고르기</h3><div class="tints" id="tints" role="group" aria-label="행성 색"></div><div class="grid" id="grid"></div></div>
     <div class="dots" id="dots"></div>
     <div class="cta"><button class="write" id="write">이어 쓰기</button></div>
   </section>
 </div>
-<script>window.__storyWorlds = window.parent !== window ? window.parent.__storyWorlds : undefined;</script>
+<script>window.__storyWorlds = window.parent !== window ? window.parent.__storyWorlds : undefined;
+addEventListener('message', event => {
+  if (event.origin !== location.origin || event.source !== host || event.data?.source !== 'story-app' || event.data.type !== 'route') return;
+  const index = worlds.findIndex(work => work.id === event.data.planet);
+  if (index >= 0 && (!$('worldView').classList.contains('on') || current !== index)) open(index, bodies[index].g);
+  else if (index < 0 && $('worldView').classList.contains('on')) back();
+});
+</script>
 <script>
 // Inside the app the works come from window.__storyWorlds and actions go back by postMessage
 // (source 'story-world': enter / ideas / new). Opened directly, it shows invented sample works.
@@ -151,6 +172,16 @@ const forms = [
   { name: '안개 세계', col: '#f2cf4a' }
 ];
 const defaultSeed = form => 11.3 + form * 5.1;
+// Planet colour: the owner picks a hue and the baked texture is recoloured with a CSS filter. Index 0 keeps the texture's own colours.
+const tints = [{ name: '본래 색', h: null }, { name: '푸른', h: 212 }, { name: '청록', h: 176 }, { name: '초록', h: 126 }, { name: '금빛', h: 44 }, { name: '주황', h: 22 }, { name: '붉은', h: 356 }, { name: '분홍', h: 326 }, { name: '보라', h: 272 }, { name: '은빛', h: 'silver' }];
+const hex = (h, s, l) => { const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };
+const tintOf = i => tints[i] ?? tints[0];
+const tintFilter = w => { const t = tintOf(w.tint); return t.h === null ? 'none' : t.h === 'silver' ? 'grayscale(1) brightness(1.12)' : `grayscale(1) sepia(1) saturate(2.4) hue-rotate(${t.h - 38}deg)`; };
+const paletteOf = w => { const t = tintOf(w.tint), base = forms[w.form]; return t.h === null ? base : { ...base, col: t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .66) }; };
+const readTint = id => { try { const v = localStorage.getItem('planet-tint-' + id); return v === null ? null : Number(v); } catch { return null; } };
+// Orbit spacing is a per-device preference, kept separately for PC and phone.
+const orbitKey = wide => 'orbit-gaps-' + (wide ? 'pc' : 'phone');
+function orbitGaps(wide) { try { const v = JSON.parse(localStorage.getItem(orbitKey(wide)) || 'null'); if (v && Number.isFinite(v.first) && Number.isFinite(v.between)) return v; } catch {} return { first: 1, between: 1 }; }
 const SPHERE = .573;
 // Ringed planets are baked without the edge crop so the whole ring fits: the sphere is a smaller share of the image.
 const ringed = form => form === 6 || form === 8;
@@ -164,8 +195,8 @@ const sample = [
   ['안개의 도서관', 64200, 18, 0, '읽을 때마다 결말이 바뀌는\n책들이 잠든 곳', 6, 30],
   ['이름 없는 물결', 22800, 8, 0, '누구도 부르지 않은 바다가\n스스로 이름을 찾는다', 1, 13]
 ].map(([title, chars, ch, today, line, form, notes], i) => ({ id: 's' + i, title, chars, ch, today, line, form, notes }));
-const worlds = (embedded ? window.__storyWorlds.map(w => ({ id: w.id, title: w.name, chars: w.text || 0, ch: w.chapters || 0, today: w.today || 0, line: w.subtitle || '', form: w.form, seed: w.seed, notes: w.notes || 0 })) : sample)
-  .map((w, i) => { const form = Number.isInteger(w.form) && w.form >= 0 && w.form < 10 ? w.form : i % 10; return { ...w, form, alt: typeof w.seed === 'number' && Math.abs(w.seed - defaultSeed(form)) > .01, p: forms[form] }; });
+const worlds = (embedded ? window.__storyWorlds.map(w => ({ id: w.id, title: w.name, chars: w.text || 0, ch: w.chapters || 0, today: w.today || 0, line: w.subtitle || '', form: w.form, seed: w.seed, tint: w.tint, notes: w.notes || 0 })) : sample)
+  .map((w, i) => { const form = Number.isInteger(w.form) && w.form >= 0 && w.form < 10 ? w.form : i % 10; const saved = Number.isInteger(w.tint) ? w.tint : readTint(w.id); const out = { ...w, form, tint: Number.isInteger(saved) ? saved : 0, alt: typeof w.seed === 'number' && Math.abs(w.seed - defaultSeed(form)) > .01 }; return { ...out, p: paletteOf(out) }; });
 // Planets are always complete. Length only makes them a little larger and brighter.
 const FULL = 300000;
 const weight = w => Math.sqrt(Math.min(w.chars, FULL) / FULL);
@@ -206,21 +237,28 @@ function buildSystem() {
   // PC and phone are tuned separately: PC planets are drawn larger (PC.planet), the phone keeps 1.
   const PC = { planet: Math.min(2.6, Math.max(1.8, area / 260)) };
   const k = wide ? PC.planet : 1;
-  const maxR = Math.min(width / 2 - 24 - (k - 1) * 12, area / 2 - 10 - (k - 1) * 12), minR = maxR * .26;
+  const maxR = Math.min(width / 2 - 24 - (k - 1) * 12, area / 2 - 10 - (k - 1) * 12);
+  // The sun is always the largest body: wider than the biggest planet can grow (11 * k).
+  const sunR = Math.max(11 * k * 1.7, maxR * .1);
+  const gaps = orbitGaps(wide);
+  const inner = Math.min(maxR * .8, sunR * (1.3 + .9 * gaps.first)), minR = inner;
   const defs = el('defs', {});
-  defs.innerHTML = `<radialGradient id="sun"><stop offset="0" stop-color="#fff7e4"/><stop offset=".25" stop-color="#f4dfae"/><stop offset="1" stop-color="#f4dfae" stop-opacity="0"/></radialGradient><filter id="soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="3"/></filter>`;
+  defs.innerHTML = `<radialGradient id="sun"><stop offset="0" stop-color="#fff7e4"/><stop offset=".25" stop-color="#f4dfae"/><stop offset="1" stop-color="#f4dfae" stop-opacity="0"/></radialGradient><radialGradient id="sunCore" cx=".42" cy=".4"><stop offset="0" stop-color="#fffaf0"/><stop offset=".55" stop-color="#f8e6b8"/><stop offset="1" stop-color="#e9c46f"/></radialGradient><filter id="soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="3"/></filter>`;
   // The sun opens the idea notes, as before.
   const sun = el('g', { class: 'planet-dot', tabindex: 0, role: 'button', 'aria-label': '아이디어 노트 열기' });
-  el('circle', { cx: C.x, cy: C.y, r: maxR * .24, fill: 'url(#sun)', opacity: .55 }, sun);
-  el('circle', { cx: C.x, cy: C.y, r: 5, fill: '#fff7e4' }, sun);
-  el('circle', { cx: C.x, cy: C.y, r: Math.max(26, maxR * .16), fill: 'transparent' }, sun);
+  el('circle', { cx: C.x, cy: C.y, r: sunR * 2.6, fill: 'url(#sun)', opacity: .5 }, sun);
+  el('circle', { cx: C.x, cy: C.y, r: sunR, fill: 'url(#sunCore)' }, sun);
+  el('circle', { cx: C.x, cy: C.y, r: Math.max(26, sunR * 1.2), fill: 'transparent' }, sun);
   const ideasNow = () => post({ type: 'ideas', id: worlds[current]?.id });
   sun.addEventListener('click', ideasNow);
   sun.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ideasNow(); } });
-  const n = worlds.length, step = n > 1 ? (maxR - minR) / (n - 1) : 0;
+  // Orbit spacing follows the owner's setting; if the outer orbit would leave the sky, spacing shrinks to fit.
+  const n = worlds.length, limit = Math.min(width / 2, area / 2) - 6 - 11 * k;
+  let step = n > 1 ? (maxR - minR) / (n - 1) * gaps.between : 0;
+  if (n > 1 && minR + step * (n - 1) > limit) step = Math.max(0, (limit - minR) / (n - 1));
   bodies = worlds.map((w, i) => {
     // One work sits on a wide orbit instead of hugging the sun.
-    const r = n === 1 ? maxR * .62 : minR + step * i, f = weight(w), size = (5 + 6 * f) * k;
+    const r = n === 1 ? Math.min(limit, minR + (maxR - minR) * .5 * gaps.between) : minR + step * i, f = weight(w), size = (5 + 6 * f) * k;
     const ring = el('circle', { cx: C.x, cy: C.y, r, fill: 'none', stroke: '#e7dcc4', 'stroke-opacity': .1, 'stroke-width': 1 });
     const lg = el('linearGradient', { id: 't' + i, gradientUnits: 'userSpaceOnUse' }, defs);
     el('stop', { offset: 0, 'stop-color': w.p.col, 'stop-opacity': 0 }, lg); el('stop', { offset: 1, 'stop-color': w.p.col, 'stop-opacity': .8 }, lg);
@@ -229,7 +267,7 @@ function buildSystem() {
     el('circle', { r: Math.max(22, size + 12), fill: 'transparent' }, g);
     el('circle', { r: size * (1.8 + 1.4 * f), fill: w.p.col, opacity: .12 + .3 * f, filter: 'url(#soft)' }, g);
     const halo = el('circle', { r: size + 6 * k, fill: 'none', stroke: w.p.col, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
-    const img = el('image', { href: planetSrc(w, true), x: -size / sphereOf(w.form), y: -size / sphereOf(w.form), width: 2 * size / sphereOf(w.form), height: 2 * size / sphereOf(w.form) }, g);
+    const img = el('image', { style: `filter:${tintFilter(w)}`, href: planetSrc(w, true), x: -size / sphereOf(w.form), y: -size / sphereOf(w.form), width: 2 * size / sphereOf(w.form), height: 2 * size / sphereOf(w.form) }, g);
     const old = bodies[i];
     const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, ring, trail, lg };
     g.addEventListener('click', () => open(i, g));
@@ -297,7 +335,7 @@ function buildWorlds() {
   $('track').innerHTML = worlds.map(w => {
     const f = weight(w), d = bigSize(w), glow = Math.round(30 + 70 * f);
     const alpha = Math.round(14 + 50 * f).toString(16).padStart(2, '0');
-    return `<div class="slot"><div class="big" style="--d:${d}px;--s:${sphereOf(w.form)};--g:${glow}px;--glow:${w.p.col}${alpha}"><div class="aura"></div><img alt="" src="${planetSrc(w)}"></div></div>`;
+    return `<div class="slot"><div class="big" style="--d:${d}px;--s:${sphereOf(w.form)};--g:${glow}px;--glow:${w.p.col}${alpha}"><div class="aura"></div><img alt="" src="${planetSrc(w)}" style="filter:${tintFilter(w)}"></div></div>`;
   }).join('');
   $('dots').innerHTML = worlds.map(() => '<i></i>').join('');
 }
@@ -322,11 +360,12 @@ function show(i, instant) {
   }, instant ? 0 : 180);
 }
 function open(i, from) {
+  post({ type: 'planet', id: worlds[i].id });
   stop();
   const w = worlds[i], p = phone.getBoundingClientRect(), f = from.getBoundingClientRect();
   show(i, true);
   const fly = document.createElement('div'); fly.className = 'flier';
-  Object.assign(fly.style, { left: f.left - p.left + 'px', top: f.top - p.top + 'px', width: f.width + 'px', height: f.height + 'px', background: `center / ${100 / sphereOf(w.form)}% no-repeat url(${planetSrc(w, true)})` });
+  Object.assign(fly.style, { left: f.left - p.left + 'px', top: f.top - p.top + 'px', width: f.width + 'px', height: f.height + 'px', background: `center / ${100 / sphereOf(w.form)}% no-repeat url(${planetSrc(w, true)})`, filter: tintFilter(w) });
   phone.appendChild(fly);
   const big = document.querySelectorAll('.big')[i].getBoundingClientRect();
   requestAnimationFrame(() => requestAnimationFrame(() => Object.assign(fly.style, { left: big.left - p.left + 'px', top: big.top - p.top + 'px', width: big.width + 'px', height: big.height + 'px', opacity: 0 })));
@@ -338,14 +377,29 @@ function openPicker() {
   const w = worlds[current];
   $('grid').innerHTML = forms.flatMap((form, k) => ['a', 'b'].map(v => `<button data-form="${k}" data-alt="${v === 'b'}" aria-pressed="${w.form === k && w.alt === (v === 'b')}"><img alt="" src="planets/${k}${v}-s.webp">${form.name}${v === 'b' ? ' Ⅱ' : ''}</button>`)).join('');
   $('grid').querySelectorAll('button').forEach(button => button.onclick = () => choose(+button.dataset.form, button.dataset.alt === 'true'));
+  $('grid').querySelectorAll('img').forEach(img => { img.style.filter = tintFilter(w); });
+  $('tints').innerHTML = tints.map((t, i) => `<button class="${t.h === null ? 'orig' : ''}" data-tint="${i}" aria-label="${t.name}" title="${t.name}" aria-pressed="${w.tint === i}" style="--c:${t.h === null ? 'none' : t.h === 'silver' ? '#dfe3e8' : hex(t.h, .7, .62)}"><i></i></button>`).join('');
+  $('tints').querySelectorAll('button').forEach(button => button.onclick = () => chooseTint(+button.dataset.tint));
   $('picker').classList.add('open'); $('pickScrim').classList.add('open');
 }
-function closePicker() { $('picker').classList.remove('open'); $('pickScrim').classList.remove('open'); }
-function choose(form, alt) {
+function chooseTint(tint) {
   const w = worlds[current];
-  Object.assign(w, { form, alt, p: forms[form] });
+  w.tint = tint;
+  try { localStorage.setItem('planet-tint-' + w.id, String(tint)); } catch {}
+  $('tints').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.tint === tint)));
+  $('grid').querySelectorAll('img').forEach(img => { img.style.filter = tintFilter(w); });
+  choose(w.form, w.alt, true);
+  post({ type: 'tint', id: w.id, tint });
+}
+function closePicker() { $('picker').classList.remove('open'); $('pickScrim').classList.remove('open'); }
+function choose(form, alt, quiet) {
+  const w = worlds[current];
+  Object.assign(w, { form, alt });
+  w.p = paletteOf(w);
+  bodies[current].img.style.filter = tintFilter(w);
   const big = document.querySelectorAll('.big')[current];
   big.querySelector('img').src = planetSrc(w);
+  big.querySelector('img').style.filter = tintFilter(w);
   big.style.setProperty('--d', bigSize(w) + 'px'); big.style.setProperty('--s', sphereOf(form));
   const size = bodies[current].size, k = sphereOf(form);
   Object.entries({ x: -size / k, y: -size / k, width: 2 * size / k, height: 2 * size / k }).forEach(([a, v]) => bodies[current].img.setAttribute(a, v));
@@ -353,16 +407,24 @@ function choose(form, alt) {
   bodies[current].img.setAttribute('href', planetSrc(w, true));
   $('milky').style.setProperty('--tint', w.p.col + '22');
   $('grid').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.form === form && (b.dataset.alt === 'true') === alt)));
+  if (quiet) return;
   $('saved').textContent = embedded ? '저장 중…' : '';
   post({ type: 'shape', id: w.id, form, seed: defaultSeed(form) + (alt ? 17 : 0) });
 }
+function syncGapInputs() { const g = orbitGaps(phone.clientWidth >= 900); $('gapFirst').value = g.first; $('gapBetween').value = g.between; }
+function saveGaps() { const g = { first: +$('gapFirst').value, between: +$('gapBetween').value }; try { localStorage.setItem(orbitKey(phone.clientWidth >= 900), JSON.stringify(g)); } catch {} buildSystem(); }
+$('orbitButton').onclick = () => { const p = $('orbitPanel'); p.hidden = !p.hidden; $('orbitButton').setAttribute('aria-expanded', String(!p.hidden)); if (!p.hidden) syncGapInputs(); };
+$('gapFirst').oninput = saveGaps; $('gapBetween').oninput = saveGaps;
+$('gapReset').onclick = () => { try { localStorage.removeItem(orbitKey(phone.clientWidth >= 900)); } catch {} syncGapInputs(); buildSystem(); };
 $('change').onclick = openPicker; $('pickScrim').onclick = closePicker;
 function back() {
+  post({ type: 'orbit' });
   $('worldView').classList.remove('on'); $('worldView').setAttribute('aria-hidden', 'true');
   $('orbitView').classList.remove('away'); hot(current); start();
 }
 $('back').onclick = back;
 $('write').onclick = () => post({ type: 'enter', id: worlds[current].id });
+$('stage').addEventListener('click', e => { if (e.target.closest('.big')) post({ type: 'enter', id: worlds[current].id }); });
 $('prev').onclick = () => show(current - 1); $('next').onclick = () => show(current + 1);
 let sx = null;
 $('stage').addEventListener('pointerdown', e => { sx = e.clientX; });
