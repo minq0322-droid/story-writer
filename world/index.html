@@ -52,15 +52,15 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 .row .sw { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--col); margin-right: 10px; vertical-align: 1px; box-shadow: 0 0 8px var(--col); }
 .row.hot { color: #fff; }
 /* Phone: the list of the first draft, always shown under the system. */
-.sheet { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); left: 28px; right: 28px; padding: 0; transform: none; background: none; border: 0; border-radius: 0; backdrop-filter: none; -webkit-backdrop-filter: none; z-index: 1; }
-.sheet .grip, .sheet h3, #listButton, .scrim, .focus { display: none; }
+#sheet { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); left: 28px; right: 28px; padding: 0; transform: none; background: none; border: 0; border-radius: 0; backdrop-filter: none; -webkit-backdrop-filter: none; z-index: 1; }
+#sheet .grip, #sheet h3, #listButton, #scrim, .focus { display: none; }
 .list { max-height: 196px; }
 .row:last-child { border-bottom: 1px solid var(--faint); }
 /* PC: a large system on the left, the list always open on the right. */
 @media (min-width: 900px) {
   html.full .sheet { left: auto; right: 48px; top: 140px; bottom: auto; width: 340px; transform: none; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
   html.full .sheet .grip, html.full #listButton, html.full .scrim { display: none; }
-  html.full .sheet h3 { display: block; }
+  html.full #sheet h3 { display: block; }
   html.full .list { max-height: calc(100vh - 220px); }
   html.full .focus { display: block; right: auto; width: 360px; left: 48px; bottom: 48px; }
   html.full h1, html.full .head { left: 48px; }
@@ -79,13 +79,13 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 @keyframes comet { 0%, 70% { opacity: 0; transform: translate(60px, -20px) rotate(-18deg); } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-120px, 40px) rotate(-18deg); } }
 .stage { position: absolute; left: 0; right: 0; top: 18%; height: 40%; touch-action: pan-y; }
 .track { position: absolute; inset: 0; display: flex; transition: transform .7s var(--ease); }
-.slot { flex: 0 0 100%; min-width: 0; display: grid; place-items: center; }
+.slot { flex: 0 0 100%; min-width: 0; height: 72%; display: grid; place-items: center; }
 .big { position: relative; width: var(--d); height: var(--d); transition: transform .7s var(--ease), opacity .7s; }
 .slot:not(.cur) .big { transform: scale(.34); opacity: .4; }
-.big img { position: absolute; left: 50%; top: 50%; width: calc(var(--d) / .573); height: calc(var(--d) / .573); transform: translate(-50%, -50%); pointer-events: none; animation: float 12s ease-in-out infinite; }
+.big img { position: absolute; left: 50%; top: 50%; width: calc(var(--d) / var(--s, .573)); height: calc(var(--d) / var(--s, .573)); transform: translate(-50%, -50%); pointer-events: none; animation: float 12s ease-in-out infinite; }
 .aura { position: absolute; inset: calc(var(--g) * -1); border-radius: 50%; background: radial-gradient(circle, var(--glow) 0%, transparent 62%); }
 @keyframes float { 50% { transform: translate(-50%, calc(-50% - 6px)); } }
-.info { position: absolute; top: 62%; left: 24px; right: 24px; text-align: center; transition: opacity .3s; }
+.info { position: absolute; bottom: calc(128px + env(safe-area-inset-bottom)); left: 24px; right: 24px; text-align: center; transition: opacity .3s; }
 .info h2 { margin: 0; font: 400 29px/1.3 MaruBuri; letter-spacing: .3em; padding-left: .3em; word-break: keep-all; text-wrap: balance; }
 .info h2.long { font-size: 25px; letter-spacing: .12em; padding-left: .12em; }
 .info p { margin: 10px 0 0; font-size: 12px; letter-spacing: .12em; color: var(--dim); }
@@ -152,6 +152,9 @@ const forms = [
 ];
 const defaultSeed = form => 11.3 + form * 5.1;
 const SPHERE = .573;
+// Ringed planets are baked without the edge crop so the whole ring fits: the sphere is a smaller share of the image.
+const ringed = form => form === 6 || form === 8;
+const sphereOf = form => ringed(form) ? .4244 : SPHERE;
 const planetSrc = (w, small) => `planets/${w.form}${w.alt ? 'b' : 'a'}${small ? '-s' : ''}.webp`;
 const sample = [
   ['바람을 수집하는 집', 128400, 31, 0, '바람이 머물다 간 방마다\n이름을 하나씩 남기는 집', 2, 120],
@@ -223,7 +226,7 @@ function buildSystem() {
     el('circle', { r: Math.max(22, size + 12), fill: 'transparent' }, g);
     el('circle', { r: size * (1.8 + 1.4 * f), fill: w.p.col, opacity: .12 + .3 * f, filter: 'url(#soft)' }, g);
     const halo = el('circle', { r: size + 6, fill: 'none', stroke: w.p.col, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
-    const img = el('image', { href: planetSrc(w, true), x: -size / SPHERE, y: -size / SPHERE, width: 2 * size / SPHERE, height: 2 * size / SPHERE }, g);
+    const img = el('image', { href: planetSrc(w, true), x: -size / sphereOf(w.form), y: -size / sphereOf(w.form), width: 2 * size / sphereOf(w.form), height: 2 * size / sphereOf(w.form) }, g);
     const old = bodies[i];
     const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, ring, trail, lg };
     g.addEventListener('click', () => open(i, g));
@@ -281,14 +284,17 @@ $('ideasButton').onclick = () => post({ type: 'ideas', id: worlds[current]?.id }
 $('comet').onclick = () => post({ type: 'ideas', id: worlds[current]?.id });
 
 // ── World view ──
-function buildWorlds() {
+// Ringed planets are drawn a little smaller, and never wider than the screen, so the ring stays whole.
+function bigSize(w) {
   const W = phone.clientWidth, H = phone.clientHeight;
-  const base = Math.min(W >= 900 ? 360 : 300, W * .74, H * .36);
+  const base = Math.min(W >= 900 ? 360 : 300, W * .74, H * .36), d = base * (.8 + .2 * weight(w));
+  return Math.round(ringed(w.form) ? Math.min(d * .8, W * .42) : d);
+}
+function buildWorlds() {
   $('track').innerHTML = worlds.map(w => {
-    // Ringed planets are drawn a little smaller so the ring stays on screen.
-    const f = weight(w), d = Math.round(base * (.8 + .2 * f) * (w.form === 6 || w.form === 8 ? .8 : 1)), glow = Math.round(30 + 70 * f);
+    const f = weight(w), d = bigSize(w), glow = Math.round(30 + 70 * f);
     const alpha = Math.round(14 + 50 * f).toString(16).padStart(2, '0');
-    return `<div class="slot"><div class="big" style="--d:${d}px;--g:${glow}px;--glow:${w.p.col}${alpha}"><div class="aura"></div><img alt="" src="${planetSrc(w)}"></div></div>`;
+    return `<div class="slot"><div class="big" style="--d:${d}px;--s:${sphereOf(w.form)};--g:${glow}px;--glow:${w.p.col}${alpha}"><div class="aura"></div><img alt="" src="${planetSrc(w)}"></div></div>`;
   }).join('');
   $('dots').innerHTML = worlds.map(() => '<i></i>').join('');
 }
@@ -317,7 +323,7 @@ function open(i, from) {
   const w = worlds[i], p = phone.getBoundingClientRect(), f = from.getBoundingClientRect();
   show(i, true);
   const fly = document.createElement('div'); fly.className = 'flier';
-  Object.assign(fly.style, { left: f.left - p.left + 'px', top: f.top - p.top + 'px', width: f.width + 'px', height: f.height + 'px', background: `center / ${100 / SPHERE}% no-repeat url(${planetSrc(w, true)})` });
+  Object.assign(fly.style, { left: f.left - p.left + 'px', top: f.top - p.top + 'px', width: f.width + 'px', height: f.height + 'px', background: `center / ${100 / sphereOf(w.form)}% no-repeat url(${planetSrc(w, true)})` });
   phone.appendChild(fly);
   const big = document.querySelectorAll('.big')[i].getBoundingClientRect();
   requestAnimationFrame(() => requestAnimationFrame(() => Object.assign(fly.style, { left: big.left - p.left + 'px', top: big.top - p.top + 'px', width: big.width + 'px', height: big.height + 'px', opacity: 0 })));
@@ -337,6 +343,9 @@ function choose(form, alt) {
   Object.assign(w, { form, alt, p: forms[form] });
   const big = document.querySelectorAll('.big')[current];
   big.querySelector('img').src = planetSrc(w);
+  big.style.setProperty('--d', bigSize(w) + 'px'); big.style.setProperty('--s', sphereOf(form));
+  const size = bodies[current].size, k = sphereOf(form);
+  Object.entries({ x: -size / k, y: -size / k, width: 2 * size / k, height: 2 * size / k }).forEach(([a, v]) => bodies[current].img.setAttribute(a, v));
   big.style.setProperty('--glow', w.p.col + Math.round(14 + 50 * weight(w)).toString(16).padStart(2, '0'));
   bodies[current].img.setAttribute('href', planetSrc(w, true));
   $('milky').style.setProperty('--tint', w.p.col + '22');
