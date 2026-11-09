@@ -58,8 +58,8 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 .row:last-child { border-bottom: 1px solid var(--faint); }
 /* PC: a large system on the left, the list always open on the right. */
 @media (min-width: 900px) {
-  html.full .sheet { left: auto; right: 48px; top: 140px; bottom: auto; width: 340px; transform: none; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
-  html.full .sheet .grip, html.full #listButton, html.full .scrim { display: none; }
+  html.full #sheet { left: auto; right: 48px; top: 140px; bottom: auto; width: 340px; transform: none; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
+  html.full #sheet .grip, html.full #listButton, html.full #scrim { display: none; }
   html.full #sheet h3 { display: block; }
   html.full .list { max-height: calc(100vh - 220px); }
   html.full .focus { display: block; right: auto; width: 360px; left: 48px; bottom: 48px; }
