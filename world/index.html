@@ -136,6 +136,14 @@ html.single .dots, html.single .nav { display: none; }
 @media (prefers-reduced-motion: reduce) { .big img, .comet i { animation: none; } * { transition-duration: .01ms !important; } }
 .flier { position: absolute; z-index: 20; border-radius: 50%; pointer-events: none; transition: all .8s var(--ease); }
 :focus-visible { outline: 1px solid #76c7ff; outline-offset: 3px; }
+/* The parent determines PC layout even inside a narrow card. */
+html.pc-dashboard #headline, html.pc-dashboard .orbit-view .focus, html.pc-dashboard .orbit-view .foot { display: none; }
+html.pc-dashboard .orbit-view .head .mark, html.pc-dashboard #newWork, html.pc-dashboard #sheet { display: none; }
+html.pc-dashboard .orbit-view .head { top: 8px; right: 8px; left: auto; }
+html.pc-dashboard .system { inset: 16px; width: calc(100% - 32px); height: calc(100% - 32px); }
+html.pc-dashboard .info h2 { font-size: 17px; }
+html.pc-dashboard .cta { bottom: 16px; gap: 8px; }
+html.pc-dashboard .cta button { min-width: 0; padding: 4px 12px; font-size: 13px; min-height: 26px; }
 </style>
 <div class="phone" id="phone">
   <div class="sky"></div><canvas class="stars" id="stars"></canvas>
@@ -176,6 +184,7 @@ addEventListener('message', event => {
 // Inside the app the works come from window.__storyWorlds and actions go back by postMessage
 // (source 'story-world': enter / ideas / new). Opened directly, it shows invented sample works.
 const host = window.parent !== window ? window.parent : null;
+if (host && new URLSearchParams(location.search).has('dashboard') && !host.matchMedia('(max-width: 700px), (pointer: coarse) and (max-height: 500px)').matches) document.documentElement.classList.add('pc-dashboard');
 const embedded = !!(host && window.__storyWorlds);
 if (embedded || matchMedia('(max-width: 500px)').matches || new URLSearchParams(location.search).has('full')) document.documentElement.classList.add('full');
 const post = message => { if (embedded) host.postMessage({ source: 'story-world', ...message }, location.origin); };
