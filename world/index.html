@@ -26,12 +26,19 @@ canvas.stars { position: absolute; inset: 0; width: 100%; height: 100%; }
 .head .round { width: 44px; height: 44px; font-size: 20px; }
 .head-tools { display: flex; gap: 8px; align-items: center; }
 .head .round.small svg { display: block; }
-.orbit-panel { position: absolute; z-index: 12; top: calc(72px + env(safe-area-inset-top)); right: 20px; display: grid; gap: 10px; width: 240px; padding: 14px 16px; border: 1px solid #e7dcc433; border-radius: 12px; background: #141414f2; font-size: 12px; letter-spacing: .06em; color: var(--sand); }
+.orbit-panel { position: absolute; z-index: 30; top: calc(72px + env(safe-area-inset-top)); right: 20px; display: grid; gap: 10px; width: 240px; padding: 14px 16px; border: 1px solid #e7dcc433; border-radius: 12px; background: #141414; box-shadow: 0 12px 32px #000c; font-size: 12px; letter-spacing: .06em; color: var(--sand); }
 .orbit-panel[hidden] { display: none; }
-.orbit-panel label { display: grid; gap: 6px; }
-.orbit-panel input { width: 100%; min-height: 32px; accent-color: #e7dcc4; }
-.orbit-panel button { justify-self: end; min-height: 32px; padding: 0 12px; border: 1px solid #e7dcc444; border-radius: 16px; background: none; color: var(--sand); font-size: 11px; cursor: pointer; }
-@media (max-width: 700px) { .orbit-panel { left: 20px; right: 20px; width: auto; } .orbit-panel input, .orbit-panel button { min-height: 44px; } }
+.orbit-panel p { margin: 0; line-height: 1.5; letter-spacing: .02em; color: #e7dcc4cc; }
+.orbit-panel .speeds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 3px; border-radius: 18px; background: #e7dcc414; }
+.orbit-panel .speeds button { border: 0; border-radius: 15px; padding: 0 4px; }
+.orbit-panel .speeds button[aria-pressed='true'] { background: var(--sand); color: #0b0b0c; font-weight: 600; }
+.orbit-panel .actions { display: flex; justify-content: flex-end; gap: 6px; }
+.orbit-panel button { min-height: 32px; padding: 0 12px; border: 1px solid #e7dcc444; border-radius: 16px; background: none; color: var(--sand); font-size: 11px; cursor: pointer; }
+.orbit-panel .speeds-label { font-size: 11px; color: #e7dcc499; }
+#system.adjusting { touch-action: none; }
+#system.adjusting .planet-dot { cursor: grab; }
+#system.adjusting .ring { stroke-opacity: .32; stroke-dasharray: 3 5; }
+@media (max-width: 700px) { .orbit-panel { left: 20px; right: 20px; width: auto; } .orbit-panel button { min-height: 44px; } }
 .tints { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 8px; }
 .tints button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
 .tints i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px #ffffff33; }
@@ -129,8 +136,8 @@ html.single .dots, html.single .nav { display: none; }
   <div class="sky"></div><canvas class="stars" id="stars"></canvas>
 
   <section class="orbit-view" id="orbitView">
-    <div class="head"><span class="mark"><i class="mark-logo" aria-hidden="true"></i>ODOD</span><span class="head-tools"><button class="round small" id="orbitButton" aria-label="궤도 간격" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="10"/></svg></button><button class="round" id="newWork" aria-label="새 작품">＋</button></span></div>
-    <div class="orbit-panel" id="orbitPanel" hidden><label>태양과 첫 궤도 <input type="range" id="gapFirst" min="0" max="2" step="0.05"></label><label>궤도 사이 <input type="range" id="gapBetween" min="0.3" max="1.6" step="0.05"></label><button id="gapReset">기본값</button></div>
+    <div class="head"><span class="mark"><i class="mark-logo" aria-hidden="true"></i>ODOD</span><span class="head-tools"><button class="round small" id="orbitButton" aria-label="궤도 조절" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="10"/></svg></button><button class="round" id="newWork" aria-label="새 작품">＋</button></span></div>
+    <div class="orbit-panel" id="orbitPanel" role="dialog" aria-label="궤도 조절" hidden><p>행성을 손가락으로 끌어 태양과의 거리를 바꾸세요.</p><span class="speeds-label">회전 속도</span><div class="speeds" id="speeds" role="group" aria-label="회전 속도"><button data-speed="0">멈춤</button><button data-speed="0.5">느리게</button><button data-speed="1">보통</button><button data-speed="2">빠르게</button></div><div class="actions"><button id="gapReset">기본값</button><button id="orbitDone">완료</button></div></div>
     <h1 id="headline">세계<small id="sub"></small></h1>
     <svg class="system" id="system"></svg>
     <button class="focus" id="focus"><span class="n" id="fN"></span><b id="fT"></b><span class="meta"><span id="fM"></span><span class="go">열기 ›</span></span><span class="line" id="fL"></span></button>
@@ -188,6 +195,11 @@ const paletteOf = w => { const base = forms[w.form]; if (w.form !== MACHINE) { c
 const readTint = id => { try { const v = localStorage.getItem('planet-tint-' + id); return v === null ? null : Number(v); } catch { return null; } };
 // Orbit spacing is a per-device preference, kept separately for PC and phone.
 const orbitKey = wide => 'orbit-gaps-' + (wide ? 'pc' : 'phone');
+// Each planet's distance is set by hand (0 = next to the sun, 1 = edge of the sky), per device.
+const radiiKey = wide => 'orbit-radii-' + (wide ? 'pc' : 'phone');
+function orbitRadii(wide) { try { const v = JSON.parse(localStorage.getItem(radiiKey(wide)) || 'null'); if (v && typeof v === 'object') return v; } catch {} return {}; }
+function orbitSpeed() { try { const raw = localStorage.getItem('orbit-speed'), v = Number(raw); if (raw !== null && [0, .5, 1, 2].includes(v)) return v; } catch {} return 1; }
+let speedMul = orbitSpeed(), adjusting = false, drag = null, geo = null;
 function orbitGaps(wide) { try { const v = JSON.parse(localStorage.getItem(orbitKey(wide)) || 'null'); if (v && Number.isFinite(v.first) && Number.isFinite(v.between)) return v; } catch {} return { first: 1, between: 1 }; }
 const SPHERE = .573;
 // Ringed planets are baked without the edge crop so the whole ring fits: the sphere is a smaller share of the image.
@@ -263,10 +275,13 @@ function buildSystem() {
   const n = worlds.length, limit = Math.min(width / 2, area / 2) - 6 - 11 * k;
   let step = n > 1 ? (maxR - minR) / (n - 1) * gaps.between : 0;
   if (n > 1 && minR + step * (n - 1) > limit) step = Math.max(0, (limit - minR) / (n - 1));
+  const radii = orbitRadii(wide), nearest = sunR * 1.35;
+  geo = { nearest, limit, minR };
   bodies = worlds.map((w, i) => {
-    // One work sits on a wide orbit instead of hugging the sun.
-    const r = n === 1 ? Math.min(limit, minR + (maxR - minR) * .5 * gaps.between) : minR + step * i, f = weight(w), size = (5 + 6 * f) * k;
-    const ring = el('circle', { cx: C.x, cy: C.y, r, fill: 'none', stroke: '#e7dcc4', 'stroke-opacity': .1, 'stroke-width': 1 });
+    // One work sits on a wide orbit instead of hugging the sun. A hand-set distance wins.
+    const hand = radii[w.id];
+    const r = Number.isFinite(hand) ? nearest + Math.max(0, Math.min(1, hand)) * Math.max(0, limit - nearest) : n === 1 ? Math.min(limit, minR + (maxR - minR) * .5 * gaps.between) : minR + step * i, f = weight(w), size = (5 + 6 * f) * k;
+    const ring = el('circle', { class: 'ring', cx: C.x, cy: C.y, r, fill: 'none', stroke: '#e7dcc4', 'stroke-opacity': .1, 'stroke-width': 1 });
     const lg = el('linearGradient', { id: 't' + i, gradientUnits: 'userSpaceOnUse' }, defs);
     el('stop', { offset: 0, 'stop-color': w.p.col, 'stop-opacity': 0 }, lg); el('stop', { offset: 1, 'stop-color': w.p.col, 'stop-opacity': .8 }, lg);
     const trail = el('path', { fill: 'none', stroke: `url(#t${i})`, 'stroke-width': 1.4, 'stroke-linecap': 'round', opacity: .55 });
@@ -277,7 +292,8 @@ function buildSystem() {
     const img = el('image', { style: `filter:${tintFilter(w)}`, href: planetSrc(w, true), x: -size / sphereOf(w.form), y: -size / sphereOf(w.form), width: 2 * size / sphereOf(w.form), height: 2 * size / sphereOf(w.form) }, g);
     const old = bodies[i];
     const b = { w, i, r, size, img, a: old ? old.a : (2.72 + i * 2.39996) % 6.283, speed: .11 / Math.pow(Math.max(1, r / minR), 1.5) * (n === 1 ? 2.2 : 1), g, halo, ring, trail, lg };
-    g.addEventListener('click', () => open(i, g));
+    g.addEventListener('click', () => { if (!adjusting) open(i, g); });
+    g.addEventListener('pointerdown', e => { if (!adjusting) return; e.preventDefault(); drag = b; try { g.setPointerCapture(e.pointerId); } catch {} });
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i, g); } });
     g.addEventListener('pointerenter', () => hot(i)); g.addEventListener('focus', () => hot(i));
     return b;
@@ -307,7 +323,7 @@ let last = 0, running = false;
 function tick(now) {
   if (!running) return;
   const dt = Math.min(.05, (now - last) / 1000); last = now;
-  if (!still) for (const b of bodies) { b.a += b.speed * dt; place(b); }
+  if (!still) for (const b of bodies) { if (b !== drag) b.a += b.speed * speedMul * dt; place(b); }
   requestAnimationFrame(tick);
 }
 function start() { if (running || document.hidden || $('worldView').classList.contains('on')) return; running = true; last = performance.now(); requestAnimationFrame(tick); }
@@ -425,11 +441,28 @@ function choose(form, alt, quiet) {
   $('saved').textContent = embedded ? '저장 중…' : '';
   post({ type: 'shape', id: w.id, form, seed: defaultSeed(form) + (alt ? 17 : 0) });
 }
-function syncGapInputs() { const g = orbitGaps(phone.clientWidth >= 900); $('gapFirst').value = g.first; $('gapBetween').value = g.between; }
-function saveGaps() { const g = { first: +$('gapFirst').value, between: +$('gapBetween').value }; try { localStorage.setItem(orbitKey(phone.clientWidth >= 900), JSON.stringify(g)); } catch {} buildSystem(); }
-$('orbitButton').onclick = () => { const p = $('orbitPanel'); p.hidden = !p.hidden; $('orbitButton').setAttribute('aria-expanded', String(!p.hidden)); if (!p.hidden) syncGapInputs(); };
-$('gapFirst').oninput = saveGaps; $('gapBetween').oninput = saveGaps;
-$('gapReset').onclick = () => { try { localStorage.removeItem(orbitKey(phone.clientWidth >= 900)); } catch {} syncGapInputs(); buildSystem(); };
+function syncSpeeds() { $('speeds').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === speedMul))); }
+function setAdjusting(on) { adjusting = on; drag = null; $('orbitPanel').hidden = !on; $('orbitButton').setAttribute('aria-expanded', String(on)); svg.classList.toggle('adjusting', on); if (on) syncSpeeds(); }
+$('orbitButton').onclick = () => setAdjusting(!adjusting);
+$('orbitDone').onclick = () => setAdjusting(false);
+$('speeds').onclick = e => { const b = e.target.closest('button'); if (!b) return; speedMul = +b.dataset.speed; try { localStorage.setItem('orbit-speed', String(speedMul)); } catch {} syncSpeeds(); };
+$('gapReset').onclick = () => { const wide = phone.clientWidth >= 900; try { localStorage.removeItem(radiiKey(wide)); localStorage.removeItem(orbitKey(wide)); localStorage.removeItem('orbit-speed'); } catch {} speedMul = 1; syncSpeeds(); buildSystem(); };
+// Dragging a planet moves it along the line from the sun; its orbit follows the finger.
+svg.addEventListener('pointermove', e => {
+  if (!drag || !geo) return;
+  const box = svg.getBoundingClientRect(), x = e.clientX - box.left - C.x, y = e.clientY - box.top - C.y;
+  const r = Math.max(geo.nearest, Math.min(geo.limit, Math.hypot(x, y)));
+  drag.r = r; drag.a = Math.atan2(y, x); drag.speed = .11 / Math.pow(Math.max(1, r / geo.minR), 1.5);
+  drag.ring.setAttribute('r', r); place(drag);
+});
+const endDrag = () => {
+  if (!drag || !geo) return;
+  const wide = phone.clientWidth >= 900, radii = orbitRadii(wide), span = Math.max(1, geo.limit - geo.nearest);
+  radii[drag.w.id] = Math.round((drag.r - geo.nearest) / span * 1000) / 1000;
+  try { localStorage.setItem(radiiKey(wide), JSON.stringify(radii)); } catch {}
+  drag = null;
+};
+svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
 $('change').onclick = openPicker; $('pickScrim').onclick = closePicker;
 function back() {
   post({ type: 'orbit' });
