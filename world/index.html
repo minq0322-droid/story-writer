@@ -32,13 +32,17 @@ canvas.stars { position: absolute; inset: 0; width: 100%; height: 100%; }
 .orbit-panel .speeds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 3px; border-radius: 18px; background: #e7dcc414; }
 .orbit-panel .speeds button { border: 0; border-radius: 15px; padding: 0 4px; }
 .orbit-panel .speeds button[aria-pressed='true'] { background: var(--sand); color: #0b0b0c; font-weight: 600; }
-.orbit-panel .actions { display: flex; justify-content: flex-end; gap: 6px; }
+.orbit-panel .row1, .orbit-panel .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.orbit-panel .row2 .speeds { flex: 1; }
+.orbit-panel .link { min-height: 44px; margin-block: -12px; padding: 0 8px; border: 0; color: #e7dcc499; text-decoration: underline; text-underline-offset: 3px; }
+.orbit-panel .done { flex: none; background: var(--sand); color: #0b0b0c; border: 0; font-weight: 600; }
 .orbit-panel button { min-height: 32px; padding: 0 12px; border: 1px solid #e7dcc444; border-radius: 16px; background: none; color: var(--sand); font-size: 11px; cursor: pointer; }
-.orbit-panel .speeds-label { font-size: 11px; color: #e7dcc499; }
 #system.adjusting { touch-action: none; }
 #system.adjusting .planet-dot { cursor: grab; }
 #system.adjusting .ring { stroke-opacity: .32; stroke-dasharray: 3 5; }
-@media (max-width: 700px) { .orbit-panel { left: 20px; right: 20px; width: auto; } .orbit-panel button { min-height: 44px; } }
+#system.adjusting { cursor: grab; }
+@media (max-width: 700px) { .orbit-panel { top: auto; bottom: calc(20px + env(safe-area-inset-bottom)); left: 16px; right: 16px; width: auto; gap: 6px; padding: 10px 12px; } .orbit-panel button { min-height: 44px; } .orbit-panel .row1 { height: 20px; } }
+@media (min-width: 701px) { .orbit-panel { width: 360px; } }
 .tints { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 8px; }
 .tints button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
 .tints i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px #ffffff33; }
@@ -137,7 +141,7 @@ html.single .dots, html.single .nav { display: none; }
 
   <section class="orbit-view" id="orbitView">
     <div class="head"><span class="mark"><i class="mark-logo" aria-hidden="true"></i>ODOD</span><span class="head-tools"><button class="round small" id="orbitButton" aria-label="궤도 조절" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="10"/></svg></button><button class="round" id="newWork" aria-label="새 작품">＋</button></span></div>
-    <div class="orbit-panel" id="orbitPanel" role="dialog" aria-label="궤도 조절" hidden><p>행성을 손가락으로 끌어 태양과의 거리를 바꾸세요.</p><span class="speeds-label">회전 속도</span><div class="speeds" id="speeds" role="group" aria-label="회전 속도"><button data-speed="0">멈춤</button><button data-speed="0.5">느리게</button><button data-speed="1">보통</button><button data-speed="2">빠르게</button></div><div class="actions"><button id="gapReset">기본값</button><button id="orbitDone">완료</button></div></div>
+    <div class="orbit-panel" id="orbitPanel" role="dialog" aria-label="궤도 조절" hidden><div class="row1"><p>행성이나 궤도를 끌어 거리 조절</p><button id="gapReset" class="link">기본값</button></div><div class="row2"><div class="speeds" id="speeds" role="group" aria-label="회전 속도"><button data-speed="0">멈춤</button><button data-speed="0.5">느리게</button><button data-speed="1">보통</button><button data-speed="2">빠르게</button></div><button id="orbitDone" class="done">완료</button></div></div>
     <h1 id="headline">세계<small id="sub"></small></h1>
     <svg class="system" id="system"></svg>
     <button class="focus" id="focus"><span class="n" id="fN"></span><b id="fT"></b><span class="meta"><span id="fM"></span><span class="go">열기 ›</span></span><span class="line" id="fL"></span></button>
@@ -447,12 +451,23 @@ $('orbitButton').onclick = () => setAdjusting(!adjusting);
 $('orbitDone').onclick = () => setAdjusting(false);
 $('speeds').onclick = e => { const b = e.target.closest('button'); if (!b) return; speedMul = +b.dataset.speed; try { localStorage.setItem('orbit-speed', String(speedMul)); } catch {} syncSpeeds(); };
 $('gapReset').onclick = () => { const wide = phone.clientWidth >= 900; try { localStorage.removeItem(radiiKey(wide)); localStorage.removeItem(orbitKey(wide)); localStorage.removeItem('orbit-speed'); } catch {} speedMul = 1; syncSpeeds(); buildSystem(); };
-// Dragging a planet moves it along the line from the sun; its orbit follows the finger.
+// Dragging a planet moves it along the line from the sun; dragging an orbit line only resizes that orbit.
+let byRing = false;
+svg.addEventListener('pointerdown', e => {
+  if (!adjusting || drag) return;
+  const box = svg.getBoundingClientRect(), d = Math.hypot(e.clientX - box.left - C.x, e.clientY - box.top - C.y);
+  let best = null, gap = 16;
+  for (const b of bodies) { const off = Math.abs(d - b.r); if (off <= gap) { gap = off; best = b; } }
+  if (!best) return;
+  e.preventDefault(); drag = best; byRing = true;
+  bodies.forEach(b => b.ring.setAttribute('stroke-opacity', b === best ? .6 : .1));
+  try { svg.setPointerCapture(e.pointerId); } catch {}
+});
 svg.addEventListener('pointermove', e => {
   if (!drag || !geo) return;
   const box = svg.getBoundingClientRect(), x = e.clientX - box.left - C.x, y = e.clientY - box.top - C.y;
   const r = Math.max(geo.nearest, Math.min(geo.limit, Math.hypot(x, y)));
-  drag.r = r; drag.a = Math.atan2(y, x); drag.speed = .11 / Math.pow(Math.max(1, r / geo.minR), 1.5);
+  drag.r = r; if (!byRing) drag.a = Math.atan2(y, x); drag.speed = .11 / Math.pow(Math.max(1, r / geo.minR), 1.5);
   drag.ring.setAttribute('r', r); place(drag);
 });
 const endDrag = () => {
@@ -461,6 +476,7 @@ const endDrag = () => {
   radii[drag.w.id] = Math.round((drag.r - geo.nearest) / span * 1000) / 1000;
   try { localStorage.setItem(radiiKey(wide), JSON.stringify(radii)); } catch {}
   drag = null;
+  if (byRing) { byRing = false; hot(current); }
 };
 svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
 $('change').onclick = openPicker; $('pickScrim').onclick = closePicker;
