@@ -1,7 +1,7 @@
 
 const PREFIX = 'story-app-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIX + '15aa22481126';
-const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","fonts/MaruBuri-Regular.woff2","fonts/MaruBuri-SemiBold.woff2","fonts/MaruBuri-Bold.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","icon-lotus-192-v2.png","icon-lotus-512-v2.png","apple-touch-icon-lotus-v2.png","icon-lotus-v2.svg","assets/index-76NvlyFZ.css","assets/index-BfYa0EqK.js","assets/browser-C0BmGph4.js","assets/worker-DR9xJwo4.js","assets/worker-3yAOa1C4.js"].map(path => new URL(path, self.registration.scope).href);
+const CACHE = PREFIX + 'aadc5aec887f';
+const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","fonts/MaruBuri-Regular.woff2","fonts/MaruBuri-SemiBold.woff2","fonts/MaruBuri-Bold.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","icon-lotus-192-v2.png","icon-lotus-512-v2.png","apple-touch-icon-lotus-v2.png","icon-lotus-v2.svg","assets/index-xmUCm6tK.css","assets/index-D0DfeneI.js","assets/browser-Cn5z8VWx.js","assets/worker-DR9xJwo4.js","assets/worker-3yAOa1C4.js"].map(path => new URL(path, self.registration.scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
