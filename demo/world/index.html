@@ -128,6 +128,7 @@ svg.system { position: absolute; left: 0; width: 100%; overflow: visible; }
 .dots i { width: 5px; height: 5px; border-radius: 3px; background: #e7dcc444; transition: width .4s var(--ease), background .4s; }
 .dots i.on { width: 18px; background: var(--sand); }
 .cta { position: absolute; left: 24px; right: 24px; bottom: calc(32px + env(safe-area-inset-bottom)); display: flex; gap: 10px; max-width: 420px; margin: 0 auto; }
+.cta .home { flex: 1; height: 52px; border: 1px solid #e7dcc466; border-radius: 26px; background: none; color: var(--sand); font: 600 15px SUIT; letter-spacing: .08em; cursor: pointer; }
 .cta .write { flex: 1; height: 52px; border: 0; border-radius: 26px; background: var(--sand); color: #0b0b0c; font: 600 15px SUIT; letter-spacing: .08em; cursor: pointer; }
 .nav { position: absolute; top: 38%; width: 52px; height: 52px; border: 0; background: none; font-size: 28px; color: var(--dim); cursor: pointer; display: none; }
 @media (min-width: 900px) { html.full .nav { display: block; } html.full .nav.l { left: 6%; } html.full .nav.r { right: 6%; } }
@@ -160,7 +161,7 @@ html.single .dots, html.single .nav { display: none; }
     <div class="scrim" id="pickScrim"></div>
     <div class="sheet" id="picker" role="dialog" aria-label="행성 고르기"><div class="grip"></div><h3>행성 고르기</h3><div class="tints" id="tints" role="group" aria-label="행성 색"></div><div class="grid" id="grid"></div></div>
     <div class="dots" id="dots"></div>
-    <div class="cta"><button class="write" id="write">이어 쓰기</button></div>
+    <div class="cta"><button class="home" id="home">작품 보기</button><button class="write" id="write">이어 쓰기</button></div>
   </section>
 </div>
 <script>window.__storyWorlds = window.parent !== window ? window.parent.__storyWorlds : undefined;
@@ -488,6 +489,7 @@ function back() {
 $('back').onclick = back;
 $('write').onclick = () => post({ type: 'enter', id: worlds[current].id });
 $('stage').addEventListener('click', e => { if (e.target.closest('.big')) post({ type: 'enter', id: worlds[current].id }); });
+$('home').onclick = () => post({ type: 'home', id: worlds[current].id });
 $('prev').onclick = () => show(current - 1); $('next').onclick = () => show(current + 1);
 let sx = null;
 $('stage').addEventListener('pointerdown', e => { sx = e.clientX; });
