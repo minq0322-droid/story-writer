@@ -267,7 +267,9 @@ let C = { x: 0, y: 0 }, bodies = [], current = Math.max(0, worlds.findIndex(w =>
 if (current < 0) current = 0;
 function buildSystem() {
   const W = phone.clientWidth, H = phone.clientHeight, wide = W >= 900;
-  const top = wide ? 130 : 150, bottom = wide ? 150 : $('sheet').offsetHeight + 112, area = H - top - bottom;
+  const top = wide ? 130 : 150, bottom = wide ? 150 : $('sheet').offsetHeight + 112;
+  // B2 (2026-11-12): a short screen (phone on its side) or one not laid out yet gave a negative viewBox and radius.
+  const area = Math.max(160, H - top - bottom);
   const width = wide ? W - 440 : W;
   svg.style.top = top + 'px'; svg.style.height = area + 'px'; svg.style.width = width + 'px';
   svg.setAttribute('viewBox', `0 0 ${width} ${area}`);
@@ -276,7 +278,7 @@ function buildSystem() {
   // PC and phone are tuned separately: PC planets are drawn larger (PC.planet), the phone keeps 1.
   const PC = { planet: Math.min(2.6, Math.max(1.8, area / 260)) };
   const k = wide ? PC.planet : 1;
-  const maxR = Math.min(width / 2 - 24 - (k - 1) * 12, area / 2 - 10 - (k - 1) * 12);
+  const maxR = Math.max(24, Math.min(width / 2 - 24 - (k - 1) * 12, area / 2 - 10 - (k - 1) * 12));
   // The sun is always the largest body: wider than the biggest planet can grow (11 * k).
   const sunR = Math.max(11 * k * 1.7, maxR * .1);
   const gaps = orbitGaps(wide);
@@ -531,7 +533,11 @@ addEventListener('message', e => {
   if (e.data.type === 'shape-error') $('saved').textContent = '저장하지 못했습니다 · 다시 골라 주세요';
 });
 
-function layout() { paintStars(); buildSystem(); buildWorlds(); show(current, true); }
+function layout() {
+  // Not laid out yet (hidden frame): draw once it has a size instead of drawing at 0×0.
+  if (!phone.clientWidth || !phone.clientHeight) { requestAnimationFrame(layout); return; }
+  paintStars(); buildSystem(); buildWorlds(); show(current, true);
+}
 layout(); start();
 const meteorQuiet = matchMedia('(prefers-reduced-motion: reduce)');
 // 별똥별 (2026-11-12 작가): first one 2 s after the screen opens, then every 6 s, alternating 1 and 2 at a time,
