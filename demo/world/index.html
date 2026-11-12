@@ -534,19 +534,28 @@ addEventListener('message', e => {
 function layout() { paintStars(); buildSystem(); buildWorlds(); show(current, true); }
 layout(); start();
 const meteorQuiet = matchMedia('(prefers-reduced-motion: reduce)');
-setInterval(() => {
-  if (document.hidden || meteorQuiet.matches) return;
+// 별똥별 (2026-11-12 작가): first one 2 s after the screen opens, then every 6 s, alternating 1 and 2 at a time,
+// each from a random side. The bright head (right end of the element) always points the way it travels.
+function meteor() {
   const box = phone.getBoundingClientRect(), m = document.createElement('i');
-  const angle = 20 + Math.random() * 20, run = 260 + Math.random() * 160, rad = angle * Math.PI / 180;
+  const tilt = 15 + Math.random() * 35, left = Math.random() < .5, run = 240 + Math.random() * 180;
+  const heading = left ? 180 - tilt : tilt, rad = heading * Math.PI / 180;
   m.className = 'meteor';
-  m.style.left = Math.round(box.width * (.35 + Math.random() * .6)) + 'px';
-  m.style.top = Math.round(box.height * (.04 + Math.random() * .35)) + 'px';
-  m.style.setProperty('--angle', `${180 - angle}deg`);
-  m.style.setProperty('--dx', `${-Math.cos(rad) * run}px`);
+  m.style.left = Math.round(box.width * (left ? .4 + Math.random() * .55 : .05 + Math.random() * .55)) + 'px';
+  m.style.top = Math.round(box.height * (.04 + Math.random() * .4)) + 'px';
+  m.style.setProperty('--angle', `${heading}deg`);
+  m.style.setProperty('--dx', `${Math.cos(rad) * run}px`);
   m.style.setProperty('--dy', `${Math.sin(rad) * run}px`);
   phone.appendChild(m);
   m.addEventListener('animationend', () => m.remove());
-}, 6000);
+}
+let meteorRound = 0;
+function meteorShower() {
+  if (document.hidden || meteorQuiet.matches) return;
+  const count = meteorRound++ % 2 ? 2 : 1;
+  for (let i = 0; i < count; i++) setTimeout(meteor, i ? 250 + Math.random() * 650 : 0);
+}
+setTimeout(() => { meteorShower(); setInterval(meteorShower, 6000); }, 2000);
 let resizeTimer; addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(layout, 120); });
 post({ type: 'ready' });
 document.documentElement.dataset.ready = '1';
