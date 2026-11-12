@@ -6,9 +6,23 @@
     <meta name="theme-color" content="#101010" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <!-- black, not black-translucent: iOS 26 home-screen apps leave a band at the bottom with translucent + viewport-fit=cover (WebKit 301108). -->
+    <!-- default (opaque, tinted by theme-color), not black-translucent: iOS 26 home-screen apps leave a band at the bottom with translucent + viewport-fit=cover (WebKit 301108). -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ODOD" />
+    <script>
+      // 2026-11-12 작가 '상단 검은 띠': iOS 26 paints the opaque ('default') status bar with theme-color, read as the
+      // app starts. So the right colour must be in place before any app code runs, not after (the old static #101010
+      // gave a black band). Same values as --bg in tokens.css / analog.css. Prefs only — no manuscript here.
+      (function () {
+        var p = {};
+        try { p = JSON.parse(localStorage.getItem('story-prefs') || '{}') || {}; } catch (e) {}
+        var light = p.theme === 'light', analog = p.skin === 'analog';
+        var bg = analog ? (light ? '#e6e5e1' : '#2a2a2c') : (light ? '#d8cdb6' : '#101010');
+        document.documentElement.dataset.theme = light ? 'light' : 'dark';
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', bg);
+        document.documentElement.style.setProperty('--boot-bg', bg);
+      })();
+    </script>
     <meta name="format-detection" content="telephone=no" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-odod-sky.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="./odod-sky-favicon-32.png" />
@@ -16,8 +30,8 @@
     <link rel="preload" href="./fonts/SUIT-Variable.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./fonts/fonts.css">
     <style>
-      html, body { margin: 0; background: #101010; color: #e7dcc4; }
-      #splash { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #101010; transition: opacity .35s ease; }
+      html, body { margin: 0; background: var(--boot-bg, #101010); color: #e7dcc4; }
+      #splash { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: var(--boot-bg, #101010); transition: opacity .35s ease; }
       #splash.out { opacity: 0; pointer-events: none; }
       #splash svg { width: 88px; height: 88px; overflow: visible; }
       #splash .planet { transform-origin: 50px 50px; animation: sp-planet .9s cubic-bezier(.2,.75,.18,1) both; }
@@ -30,8 +44,8 @@
       @media (prefers-reduced-motion: reduce) { #splash * { animation: none !important; stroke-dashoffset: 0 !important; } }
     </style>
     <title>ODOD</title>
-    <script type="module" crossorigin src="./assets/index-DQN4sy-g.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BcyTbiWR.css">
+    <script type="module" crossorigin src="./assets/index-xjrEnjJ8.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Cp1JbK5c.css">
   </head>
   <body>
     <div id="splash" aria-hidden="true"><svg viewBox="0 0 100 100"><defs><radialGradient id="sp-g" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#fff4dc"/><stop offset=".55" stop-color="#e7dcc4"/><stop offset="1" stop-color="#8f8574"/></radialGradient></defs><g transform="rotate(-18 50 50)"><path class="ring back" d="M10 50 A40 14 0 0 1 90 50"/></g><circle class="planet" cx="50" cy="50" r="20" fill="url(#sp-g)"/><g transform="rotate(-18 50 50)"><path class="ring" d="M90 50 A40 14 0 0 1 10 50"/></g><circle class="moon" r="3"/></svg></div>
