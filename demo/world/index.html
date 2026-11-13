@@ -290,8 +290,8 @@ function buildSystem() {
   el('circle', { cx: C.x, cy: C.y, r: sunR * 2.6, fill: 'url(#sun)', opacity: .5 }, sun);
   el('circle', { cx: C.x, cy: C.y, r: sunR, fill: 'url(#sunCore)' }, sun);
   el('circle', { cx: C.x, cy: C.y, r: Math.max(26, sunR * 1.2), fill: 'transparent' }, sun);
-  // 2026-11-12 작가: the sun first asks which work's ideas to open (skipped when there is only one work).
-  const ideasNow = () => { if (worlds.length <= 1) post({ type: 'ideas', id: worlds[0]?.id }); else openIdeaSheet(); };
+  // 2026-11-13 작가: the sun opens a full-screen idea note in the app; the work is chosen when it is saved.
+  const ideasNow = () => { if (embedded) post({ type: 'quickIdea' }); else if (worlds.length <= 1) post({ type: 'ideas', id: worlds[0]?.id }); else openIdeaSheet(); };
   sun.addEventListener('click', ideasNow);
   sun.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ideasNow(); } });
   // Orbit spacing follows the owner's setting; if the outer orbit would leave the sky, spacing shrinks to fit.
