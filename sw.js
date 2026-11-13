@@ -1,8 +1,8 @@
 
 const PREFIX = 'story-app-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIX + '3b5f7772eb5f';
-const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","icon-lotus-192-v2.png","icon-lotus-512-v2.png","apple-touch-icon-lotus-v2.png","icon-lotus-v2.svg","assets/index-BrOqsf7C.css","assets/ImportPage--TOaFTa9.css","assets/index-DY_MY6JF.js","assets/worker-uSqiw7i1.js","assets/worker-C6wKds6z.js"].map(path => new URL(path, self.registration.scope).href);
-const LAZY = ["assets/ImportPage-Dw6QZ3ZD.js","assets/download-CwCcx9qy.js","assets/browser-CapSJgj0.js"].map(path => new URL(path, self.registration.scope).href);
+const CACHE = PREFIX + 'bbe424bed15d';
+const FILES = ["fonts/fonts.css","fonts/SUIT-Variable.woff2","index.html","manifest.webmanifest","icon.svg","apple-touch-icon.png","icon-192.png","icon-512.png","icon-lotus-192-v2.png","icon-lotus-512-v2.png","apple-touch-icon-lotus-v2.png","icon-lotus-v2.svg","assets/index-C1Qwb1dX.css","assets/ImportPage--TOaFTa9.css","assets/index-BnIfTzIM.js","assets/worker-uSqiw7i1.js","assets/worker-C6wKds6z.js"].map(path => new URL(path, self.registration.scope).href);
+const LAZY = ["assets/ImportPage-Ajxk1JO6.js","assets/download-BTqP--La.js","assets/browser-B2diiOGl.js"].map(path => new URL(path, self.registration.scope).href);
 const FONT_CACHE = PREFIX + 'fonts-1';
 const FONTS = ["fonts/RIDIBatang.woff","fonts/MaruBuri-Regular.woff2","fonts/MaruBuri-SemiBold.woff2","fonts/MaruBuri-Bold.woff2"].map(path => new URL(path, self.registration.scope).href);
 self.addEventListener('install', event => {
